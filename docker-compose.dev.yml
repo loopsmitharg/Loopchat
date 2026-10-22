@@ -1,0 +1,16 @@
+# Desarrollo local: solo el PostgreSQL de Loopchat (si no tenés uno instalado).
+# docker compose -f docker-compose.dev.yml up -d
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: loopchat
+      POSTGRES_PASSWORD: loopchat
+      POSTGRES_DB: loopchat_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./infra/dev/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - loopchat_dev_db:/var/lib/postgresql/data
+volumes:
+  loopchat_dev_db:

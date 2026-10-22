@@ -1,0 +1,48 @@
+# Loopchat en VPS: app web + worker + PostgreSQL propio (separado de Chatwoot).
+# Uso (desde la raíz del repo):
+#   cp .env.example .env.production  && completar
+#   docker compose -f infra/loopchat/docker-compose.yml --env-file .env.production up -d --build
+#   docker compose -f infra/loopchat/docker-compose.yml --env-file .env.production run --rm app npm run db:migrate
+#   docker compose -f infra/loopchat/docker-compose.yml --env-file .env.production run --rm app npm run db:seed:plans
+x-app: &app
+  build:
+    context: ../..
+    dockerfile: infra/loopchat/Dockerfile
+  env_file: ../../.env.production
+  environment:
+    DATABASE_URL: postgres://loopchat:${LOOPCHAT_DB_PASSWORD:?definir LOOPCHAT_DB_PASSWORD}@db:5432/loopchat
+    STORAGE_DIR: /data/storage
+    LOOPCHAT_INLINE_WORKER: "false"
+  volumes:
+    - loopchat_storage:/data/storage
+  depends_on: [db]
+  restart: always
+
+services:
+  app:
+    <<: *app
+    ports:
+      - "127.0.0.1:3000:3000" # detrás de proxy TLS
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    <<: *app
+    command: ["npm", "run", "worker"]
+
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: loopchat
+      POSTGRES_USER: loopchat
+      POSTGRES_PASSWORD: ${LOOPCHAT_DB_PASSWORD}
+    volumes:
+      - loopchat_db:/var/lib/postgresql/data
+
+volumes:
+  loopchat_db:
+  loopchat_storage:
