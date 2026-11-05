@@ -13,12 +13,19 @@ import {
 } from "../authz/context";
 import { log } from "../log";
 import { AppError, badRequest, forbidden, tooLarge } from "./errors";
-import { rateLimit } from "./rate-limit";
+import { getIP } from "better-auth/api";
+import { assertOperational } from "../services/usage";
+import { rateLimit, trustedProxies } from "./rate-limit";
 
 type RouteParams = { params: Promise<Record<string, string>> };
 
-function clientIp(req: NextRequest): string | null {
-  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || null;
+/**
+ * IP del cliente con la misma política que Better Auth: X-Forwarded-For se recorre desde la derecha
+ * saltando los proxies de confianza (TRUSTED_PROXIES); sin proxies configurados solo se acepta un
+ * único valor. Un cliente no puede elegir su propia IP agregando entradas al encabezado.
+ */
+export function clientIp(req: Request): string | null {
+  return getIP(req, { advanced: { ipAddress: { trustedProxies: trustedProxies() } } } as never);
 }
 
 /** Defensa CSRF: toda mutación debe venir del mismo origen que la app. */
@@ -93,7 +100,15 @@ export async function readJson<T>(req: NextRequest, schema: ZodType<T>): Promise
 
 type TenantHandler = (args: { req: NextRequest; ctx: Ctx; user: SessionUser; params: Record<string, string> }) => Promise<unknown>;
 
-export function tenantRoute(handler: TenantHandler, opts: { permission?: Permission; rateLimit?: { max: number; window?: number } } = {}) {
+/**
+ * Política de suspensión (única para toda la API de empresa): con la empresa suspendida o la
+ * suscripción cancelada solo se permite leer y las acciones de resguardo marcadas con
+ * `allowWhenSuspended` (revocar credenciales, desconectar el número, deshabilitar usuarios,
+ * revocar invitaciones). Bots y envíos además se frenan en el motor (isOperational).
+ */
+const READ_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
+export function tenantRoute(handler: TenantHandler, opts: { permission?: Permission; rateLimit?: { max: number; window?: number }; allowWhenSuspended?: boolean } = {}) {
   return async (req: NextRequest, route: RouteParams) => {
     try {
       assertSameOrigin(req);
@@ -102,6 +117,7 @@ export function tenantRoute(handler: TenantHandler, opts: { permission?: Permiss
       if (!resolved) throw forbidden("Tu usuario no pertenece a ninguna empresa activa.");
       const { ctx } = resolved;
       if (opts.permission) assertCan(ctx, opts.permission);
+      if (!READ_METHODS.has(req.method) && !opts.allowWhenSuspended) await assertOperational(ctx.tenantId);
       if (opts.rateLimit) await rateLimit(`u:${user.id}:${req.nextUrl.pathname}`, opts.rateLimit.max, opts.rateLimit.window);
       const params = (await route?.params) ?? {};
       const result = await handler({ req, ctx, user, params });

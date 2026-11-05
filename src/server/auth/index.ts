@@ -1,10 +1,19 @@
 import "server-only";
 import { betterAuth } from "better-auth";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { getDb } from "../db";
 import * as schema from "../db/schema";
 import { sendMail } from "../mail";
+import { consumeRateLimit, trustedProxies } from "../http/rate-limit";
+
+/** Límites por cuenta (además de por IP): frenan ataques distribuidos contra un mismo email. */
+const ACCOUNT_LIMITS: Record<string, { max: number; window: number }> = {
+  "/sign-in/email": { max: 10, window: 15 * 60 },
+  "/request-password-reset": { max: 3, window: 15 * 60 },
+};
+const authRateLimitEnabled = () => process.env.NODE_ENV === "production" || process.env.AUTH_RATE_LIMIT === "true";
 
 function createAuth() {
   const baseURL = process.env.APP_URL ?? "http://localhost:3000";
@@ -37,7 +46,9 @@ function createAuth() {
       updateAge: 60 * 60 * 24,
     },
     rateLimit: {
-      enabled: process.env.NODE_ENV === "production" || process.env.AUTH_RATE_LIMIT === "true",
+      enabled: authRateLimitEnabled(),
+      // almacenamiento compartido (Postgres): vale entre instancias y reinicios
+      customStorage: { consume: (key: string, rule: { window: number; max: number }) => consumeRateLimit(`auth:${key}`, rule.max, rule.window) },
       window: 60,
       max: 30,
       customRules: {
@@ -45,7 +56,18 @@ function createAuth() {
         "/request-password-reset": { window: 60, max: 4 },
       },
     },
+    hooks: {
+      before: createAuthMiddleware(async (ctx) => {
+        const limit = ACCOUNT_LIMITS[ctx.path];
+        if (!limit || !authRateLimitEnabled()) return;
+        const email = String((ctx.body as { email?: unknown } | undefined)?.email ?? "").trim().toLowerCase().slice(0, 254);
+        if (!email) return;
+        const r = await consumeRateLimit(`acct:${ctx.path}:${email}`, limit.max, limit.window);
+        if (!r.allowed) throw new APIError("TOO_MANY_REQUESTS", { message: "Demasiados intentos para esta cuenta. Probá de nuevo en unos minutos." });
+      }),
+    },
     advanced: {
+      ipAddress: { trustedProxies: trustedProxies() },
       cookiePrefix: "loopchat",
       useSecureCookies: baseURL.startsWith("https://"),
     },

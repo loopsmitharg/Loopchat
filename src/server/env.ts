@@ -19,6 +19,8 @@ const schema = z.object({
   LOOPCHAT_DEMO_MODE: z.enum(["true", "false"]).default("false"),
   AI_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(20000),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+  /** CIDR de los proxies que agregan X-Forwarded-For (p. ej. 127.0.0.1/32 para Caddy local). "none" = conexión directa. */
+  TRUSTED_PROXIES: z.string().optional(),
 });
 
 export type Env = z.infer<typeof schema>;
@@ -34,6 +36,9 @@ export function env(): Env {
   }
   if (parsed.data.NODE_ENV === "production" && parsed.data.LOOPCHAT_ALLOW_PRIVATE_URLS === "true") {
     throw new Error("LOOPCHAT_ALLOW_PRIVATE_URLS no puede estar activo en producción");
+  }
+  if (parsed.data.NODE_ENV === "production" && !parsed.data.TRUSTED_PROXIES) {
+    throw new Error("TRUSTED_PROXIES es obligatorio en producción (CIDR del proxy TLS, o 'none' sin proxy): sin él los límites por IP no son confiables");
   }
   cached = parsed.data;
   return cached;
