@@ -1,0 +1,17 @@
+# Backup diario de Loopchat (+ Chatwoot). Instalar: ver docs/operations.md § Backups.
+[Unit]
+Description=Loopchat backup cifrado con copia externa
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+# Variables (DATABASE_URL, BACKUP_PUBLIC_KEY, RCLONE_REMOTE, CHATWOOT_PG_DUMP_CMD, …) sin secretos en este archivo
+EnvironmentFile=/etc/loopchat/backup.env
+WorkingDirectory=/opt/loopchat
+ExecStart=/usr/bin/docker compose -f infra/loopchat/docker-compose.yml --env-file .env.production run --rm -T \
+  -e BACKUP_DIR=/backups -e BACKUP_PUBLIC_KEY=/run/backup-public.pem -e RCLONE_REMOTE -e RCLONE_CONFIG=/run/rclone.conf -e CHATWOOT_PG_DUMP_CMD \
+  -v /var/backups/loopchat:/backups -v /etc/loopchat/backup-public.pem:/run/backup-public.pem:ro -v /etc/loopchat/rclone.conf:/run/rclone.conf:ro \
+  app bash scripts/backup.sh
+# si el script falla, el monitor alerta por el heartbeat; además systemd registra el error
+Nice=10

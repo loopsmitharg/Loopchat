@@ -1044,6 +1044,26 @@ export const jobs = pgTable(
   (t) => [index("jobs_pick_idx").on(t.status, t.runAt), index("jobs_tenant_running_idx").on(t.tenantId, t.status)],
 );
 
+/** Último resultado de tareas operativas (backup diario, prueba de restore): el monitor alerta si faltan o fallan. */
+export const opsHeartbeats = pgTable("ops_heartbeats", {
+  name: text("name").primaryKey(),
+  lastStatus: text("last_status", { enum: ["ok", "fail"] }).notNull(),
+  lastRunAt: ts("last_run_at").notNull().defaultNow(),
+  lastOkAt: ts("last_ok_at"),
+  detail: text("detail"),
+});
+
+/** Alertas del monitor: deduplicadas por clave (se notifica al abrir, cada N horas si sigue y al resolverse). */
+export const opsAlerts = pgTable("ops_alerts", {
+  key: text("key").primaryKey(),
+  severity: text("severity", { enum: ["warning", "critical"] }).notNull(),
+  status: text("status", { enum: ["firing", "resolved"] }).notNull(),
+  summary: text("summary").notNull(),
+  firstAt: ts("first_at").notNull().defaultNow(),
+  lastNotifiedAt: ts("last_notified_at"),
+  resolvedAt: ts("resolved_at"),
+});
+
 /** Resultado de una generación de IA ya pagada: un reintento del mismo paso lo reutiliza en lugar de volver a llamar. */
 export const aiTurnResults = pgTable("ai_turn_results", {
   key: text("key").primaryKey(),

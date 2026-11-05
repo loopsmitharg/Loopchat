@@ -1,0 +1,11 @@
+# Prueba semanal de restore. Correr en un host SEPARADO que tenga la clave privada de backups
+# (nunca en el servidor de producción) y acceso a la copia externa.
+[Unit]
+Description=Loopchat: prueba de restauración del último backup
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/loopchat/restore-test.env
+WorkingDirectory=/opt/loopchat
+ExecStartPre=/usr/bin/rclone copy ${RCLONE_REMOTE} /var/backups/loopchat-restore-test --max-age 2d --include "loopchat-*"
+ExecStart=/usr/bin/env BACKUP_DIR=/var/backups/loopchat-restore-test bash scripts/backup-restore-test.sh

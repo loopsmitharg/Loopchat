@@ -27,6 +27,7 @@ describe("validación comercial (regresión S6 / P1-07): falsos negativos", () =
   it("confirmación de venta", () => expect(kinds("¡Listo, compra cerrada!")).toContain("sale_confirmation"));
   it("reserva confirmada", () => expect(kinds("Tu pedido está confirmado, te lo reservé.")).toContain("sale_confirmation"));
   it("stock inventado", () => expect(kinds("Hay 12 unidades disponibles.")).toContain("stock"));
+  it("stock inventado (quedan)", () => expect(kinds("Quedan 7 unidades, apurate.")).toContain("stock"));
   it("disponibilidad sin stock informado", () => expect(kinds("Sí, está disponible.", { ...facts, stocks: [null] })).toContain("stock"));
   it("plazo de entrega no informado", () => expect(kinds("Te llega mañana sin problema.")).toContain("delivery"));
 });
@@ -39,6 +40,8 @@ describe("validación comercial: falsos positivos (respuestas legítimas)", () =
   it("plazo informado por la empresa", () => expect(ok("Llega en 72 horas hábiles.")).toBe(true));
   it("negar descuentos es correcto", () => expect(ok("No tenemos descuentos en este momento, el precio es $85.000.")).toBe(true));
   it("medidas, modelos y potencias no son importes", () => expect(ok("La amoladora de 115mm y 850W es ideal; el modelo GWS-850 pesa 1,9 kg.")).toBe(true));
+  it("cantidad pedida por el cliente no es stock ni descuento", () => expect(ok("Te lo dejo en 2 unidades.")).toBe(true));
+  it("total de varias unidades al precio de lista", () => expect(ok("Para 3 unidades sale $255.000.")).toBe(true));
   it("cantidades y fechas", () => expect(ok("Para las 3 bolsas que necesitás el 15/11, consultame cualquier duda.")).toBe(true));
   it("porcentajes no comerciales", () => expect(ok("Es 100% de algodón y con garantía de 12 meses.")).toBe(true));
   it("sin stock (negación)", () => expect(ok("No hay stock de ese modelo por ahora.")).toBe(true));

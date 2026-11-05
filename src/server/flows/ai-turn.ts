@@ -13,7 +13,7 @@ import { checkCommercialClaims } from "@/lib/commercial-guard";
 import { activeLeadFields, applyCollectedLeadData } from "../services/lead-fields";
 import { createOpportunity, updateOpportunity } from "../services/opportunities";
 import { createTask } from "../services/tasks";
-import { buildPrompt, historyToMessages, parseAiDecision, type PromptField, type PromptProduct } from "./ai-step";
+import { buildPrompt, historyToMessages, parseAiDecision, safeContactName, type PromptField, type PromptProduct } from "./ai-step";
 import type { AiNodeResult } from "./interpreter";
 import { buildCommercialMemory } from "./memory";
 import { assignableMembers, effectiveTools, isAssignableMember, type BotSettings } from "./settings";
@@ -400,7 +400,7 @@ async function applyOpportunity(
     if (!open) {
       const created = await createOpportunity(
         ctx,
-        { contactId: conv.contactId, conversationId: conv.id, title: data.title?.trim() || `Consulta de ${contactName ?? "contacto"}`, pipelineId: pid, stageId: data.stageId ?? undefined, amount: data.amount ?? undefined, source: "bot", ownerUserId: owner },
+        { contactId: conv.contactId, conversationId: conv.id, title: data.title?.trim() || `Consulta de ${safeContactName(contactName) || "contacto"}`, pipelineId: pid, stageId: data.stageId ?? undefined, amount: data.amount ?? undefined, source: "bot", ownerUserId: owner },
         tx,
       );
       if (data.productIds?.length) await tx.update(opportunities).set({ productIds: [...new Set(data.productIds)] }).where(eq(opportunities.id, created.id));

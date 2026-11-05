@@ -58,13 +58,15 @@ export function moneyAmounts(text: string): number[] {
 
 const close = (a: number, b: number) => Math.abs(a - b) <= Math.max(1, b * 0.005);
 
-const DISCOUNT = /descuento|\bdto\b|bonificaci|rebaj|\boff\b|\bpromo|oferta|precio especial|mas barato|te lo dejo (a|en)|\d+\s?x\s?\d+\b|sin interes/;
+// (rebajar un importe concreto, "te lo dejo en $X", lo cubre la regla de importes)
+const DISCOUNT = /descuento|\bdto\b|bonificaci|rebaj|\boff\b|\bpromo|oferta|precio especial|mas barato|\d+\s?x\s?\d+\b|sin interes/;
 const NEGATED_DISCOUNT = /\b(no|sin|ningun|ninguna)\b[^.!?\n]{0,35}(descuento|bonificaci|rebaj|promo|oferta)|no (puedo|podemos|tenemos|hay|hacemos|ofrecemos|manejamos|contamos)\b/;
 const SALE_CONFIRM =
   /\b(compra|venta|pedido|orden|reserva|pago|operacion)\s+(?:(?:esta|quedo|fue|ya esta|ya quedo)\s+)?(confirmad|cerrad|realizad|registrad|aprobad|procesad|acreditad)[oa]s?\b|\bya (esta|quedo|quedaron|estan)\s+(reservad|confirmad|pagad|vendid|apartad)/;
 /** Pretérito con tilde ("te lo reservé") sobre el texto original: sin tilde es subjuntivo ("¿te lo reserve?"). */
 const SALE_CONFIRM_PAST = /\b(te|lo|la|los|las)\s+(reservé|confirmé|aparté|vendí)(?![\p{L}])/iu;
-const STOCK_QTY = /\b(\d{1,6})\s+(unidades|disponibles|en stock|en existencia)\b/g;
+// cantidad en stock: "quedan/hay/tenemos N unidades" o "N disponibles / en stock"; "2 unidades" a secas es lo que pide el cliente
+const STOCK_QTY = /\b(?:hay|quedan|queda|tenemos|contamos con|disponemos de|nos quedan)\s+(\d{1,6})\s+(?:unidades|u\.|disponibles|en stock)|\b(\d{1,6})\s+(?:disponibles|en stock|en existencia)\b/g;
 const AVAILABLE = /\b(hay stock|tenemos stock|con stock|en stock|tenemos disponible|esta disponible|estan disponibles|disponible para entrega|lo tenemos|los tenemos|las tenemos)\b/;
 const NEGATED_STOCK = /\b(no|sin)\b[^.!?\n]{0,20}(stock|disponib|tenemos)|\bagotad/;
 const DELIVERY = /\b(llega|llegan|llegaria|llegara|entrega|entregamos|envio|enviamos|despach\w*|te lo mand\w*|te los mand\w*)\b[^.!?\n]{0,50}?\b(hoy|manana|en el dia|en (\d+)\s*(h|hs|horas|dias)( habiles)?|(\d+)\s*(h|hs|horas|dias)( habiles)?)\b/;
@@ -95,7 +97,7 @@ export function checkCommercialClaims(reply: string, facts: CommercialFacts): { 
     // 4) stock: cantidades exactas del catálogo; disponibilidad solo con stock informado
     if (!NEGATED_STOCK.test(s)) {
       for (const m of s.matchAll(STOCK_QTY)) {
-        const q = Number(m[1]);
+        const q = Number(m[1] ?? m[2]);
         if (!facts.stocks.some((x) => x === q)) violations.push({ kind: "stock", text: `stock no verificado: ${q}` });
       }
       if (AVAILABLE.test(s) && !facts.stocks.some((x) => x !== null && x > 0)) violations.push({ kind: "stock", text: "afirma disponibilidad sin stock informado" });

@@ -49,6 +49,6 @@ await run(4, 60); // calentamiento
 const results = [];
 for (const [c, n] of [[1, 120], [10, 600], [25, 1000], [50, 1500]]) results.push(await run(c, n));
 console.table(results);
-const out = path.resolve(import.meta.dirname, "../../docs/audits/evidence");
+const out = path.resolve(import.meta.dirname, "../../docs/readiness-remediation/evidence");
 fs.mkdirSync(out, { recursive: true });
 fs.writeFileSync(path.join(out, "load-results.json"), JSON.stringify({ generatedAt: new Date().toISOString(), base: BASE, endpoints, results }, null, 2));

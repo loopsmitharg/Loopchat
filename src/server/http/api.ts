@@ -15,7 +15,7 @@ import { log } from "../log";
 import { AppError, badRequest, forbidden, tooLarge } from "./errors";
 import { getIP } from "better-auth/api";
 import { assertOperational } from "../services/usage";
-import { rateLimit, trustedProxies } from "./rate-limit";
+import { consumeRateLimit, rateLimit, trustedProxies } from "./rate-limit";
 
 type RouteParams = { params: Promise<Record<string, string>> };
 
@@ -48,6 +48,8 @@ export function errorResponse(err: unknown) {
     );
   }
   log.error("api.unhandled", { err });
+  // contador por minuto para el monitor (ops:http5xx); nunca bloquea la respuesta
+  void consumeRateLimit("ops:http5xx", Number.MAX_SAFE_INTEGER, 60).catch(() => undefined);
   return NextResponse.json({ error: { code: "internal_error", message: "Error interno. Probá de nuevo." } }, { status: 500 });
 }
 

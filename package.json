@@ -27,7 +27,11 @@
     "sim:chatwoot:demo": "tsx tools/chatwoot-sim/server.ts --state storage/chatwoot-sim-state.json",
     "demo:check": "tsx scripts/demo-check.ts",
     "demo:chat": "tsx scripts/demo-chat.ts",
-    "db:seed:demo-catalog": "tsx --conditions=react-server scripts/seed-demo-catalog.ts"
+    "db:seed:demo-catalog": "tsx --conditions=react-server scripts/seed-demo-catalog.ts",
+    "monitor": "tsx --conditions=react-server scripts/monitor.ts",
+    "ops:heartbeat": "tsx --conditions=react-server scripts/ops-heartbeat.ts",
+    "backup": "bash scripts/backup.sh",
+    "backup:restore-test": "bash scripts/backup-restore-test.sh"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

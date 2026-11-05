@@ -18,6 +18,7 @@ import {
 import { enqueue } from "../jobs/queue";
 import { log } from "../log";
 import { recordUsage } from "../services/usage";
+import { safeContactName } from "../flows/ai-step";
 import { triggerBotForIncoming } from "../flows/trigger";
 import { getTenantChatwoot } from "./tenant-client";
 import type { CwApiMessage, CwConversation, CwWebhookConversation, CwWebhookMessage } from "./types";
@@ -116,7 +117,7 @@ async function maybeCreateOpportunity(tx: Tx, tenantId: string, contactId: strin
   if (!first) return null;
   const [opp] = await tx
     .insert(opportunities)
-    .values({ tenantId, pipelineId: pipeline.id, stageId: first.id, contactId, conversationId, title: `Consulta de ${contactName}`, source: "whatsapp", currency: tenant?.defaultCurrency ?? "ARS" })
+    .values({ tenantId, pipelineId: pipeline.id, stageId: first.id, contactId, conversationId, title: `Consulta de ${safeContactName(contactName) || "contacto"}`, source: "whatsapp", currency: tenant?.defaultCurrency ?? "ARS" })
     .returning();
   return opp;
 }

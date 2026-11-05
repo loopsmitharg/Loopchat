@@ -57,12 +57,24 @@ docker compose -f infra/loopchat/docker-compose.yml --env-file .env.production r
 
 ```
 loopchat.tu-dominio.com {
+  # límite de cuerpo en el borde (la app además corta el stream: 512 KB webhooks/JSON, ~5 MB archivos)
+  request_body {
+    max_size 6MB
+  }
+  header Strict-Transport-Security "max-age=31536000; includeSubDomains"
   reverse_proxy 127.0.0.1:3000
 }
 chatwoot.tu-dominio.com {
+  request_body {
+    max_size 50MB
+  }
   reverse_proxy 127.0.0.1:3001
 }
 ```
+
+Caddy no confía en el `X-Forwarded-For` que manda el cliente y agrega la IP real. En Loopchat configurar
+`TRUSTED_PROXIES` con la red desde la que llega el proxy (con la app en Docker: la red bridge, p. ej. `172.16.0.0/12`):
+sin eso la app no arranca en producción, porque los límites por IP no serían confiables.
 
 ## 4. Alta del primer cliente (orden)
 

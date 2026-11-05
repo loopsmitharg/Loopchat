@@ -14,7 +14,7 @@ describe("ssrf (modo producción)", () => {
     const bypass = ["https://[::ffff:127.0.0.1]/", "https://[::ffff:169.254.169.254]/", "https://[::ffff:a9fe:a9fe]/", "https://127.1/", "https://2130706433/", "https://0x7f000001/", "https://127.0.0.1.nip.io/"].map((u) => [u, accepted(u)]);
     env.NODE_ENV = prev.n;
     env.LOOPCHAT_ALLOW_PRIVATE_URLS = prev.a;
-    (await import("node:fs")).writeFileSync("docs/audits/evidence/ssrf-results.json", JSON.stringify({ blockedOk, bypass }, null, 2));
+    (await import("node:fs")).writeFileSync("docs/readiness-remediation/evidence/ssrf-results.json", JSON.stringify({ blockedOk, bypass }, null, 2));
     expect(blockedOk.every(([, a]) => a === false)).toBe(true);
     expect(bypass.filter(([u]) => !String(u).includes("nip.io")).every(([, a]) => a === false)).toBe(true);
   });

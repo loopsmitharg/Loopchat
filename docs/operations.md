@@ -23,25 +23,42 @@
 | `chatwoot.webhook.rejected` `bad_signature` | Secreto rotado o webhook recreado a mano | Re-vincular desde el panel; no desactivar la verificación |
 | Eventos en `failed` | Error de procesamiento | Corregir causa y **Reprocesar eventos fallidos** (idempotente) |
 | Bot no responde y deriva | Cupo de IA agotado, proveedor caído o clave revocada | Ver **Plan y consumo** y **Configuración → IA → Probar** |
-| "Fuera de la ventana de 24 h" | Política de Meta | Solo plantillas aprobadas (desde Chatwoot en V1) |
-| Cola atrasada | Worker detenido | `docker compose … up -d worker`; los trabajos bloqueados se retoman solos al vencer el lock |
+| "Fuera de la ventana de 24 h" | Política de Meta | **Enviar plantilla** desde la conversación (plantillas aprobadas de la WABA; "Actualizar" las relee desde Meta) |
+| Cola atrasada | Worker detenido o empresa con IA lenta | `docker compose … up -d worker`; los trabajos con lease vencido se retoman solos; ajustar `WORKER_CONCURRENCY` / `WORKER_TENANT_CONCURRENCY` |
 
-## Backups y restore
+## Backups y restore (automatizados)
 
-Backups **separados** y consistentes:
+**Qué se respalda:** base de Loopchat, base de Chatwoot (`CHATWOOT_DATABASE_URL` o `CHATWOOT_PG_DUMP_CMD`), archivos de Loopchat (`STORAGE_DIR`) y de Chatwoot (`CHATWOOT_STORAGE_DIR`). Los secretos de entorno (`LOOPCHAT_ENCRYPTION_KEYS`, `BETTER_AUTH_SECRET`, `.env` de Chatwoot) van en un gestor de secretos: sin ellos un backup de credenciales no sirve.
 
-1. **Loopchat:** `DATABASE_URL=… STORAGE_DIR=/data/storage scripts/backup.sh /backups` (pg_dump formato custom + tar de documentos). Programar diario (cron) y copiar fuera del VPS.
-2. **Chatwoot:** `docker compose exec postgres pg_dump -U postgres -Fc chatwoot > chatwoot-$(date +%F).dump` + volumen `storage_data`. Seguir la guía oficial.
-3. **Claves:** `LOOPCHAT_ENCRYPTION_KEYS`, `BETTER_AUTH_SECRET` y el `.env` de Chatwoot en un gestor de secretos (sin ellas el backup de credenciales no sirve).
+**Cómo funciona `scripts/backup.sh`** (diario, `infra/ops/loopchat-backup.timer`):
+1. `pg_dump` de cada base y verificación con `pg_restore --list` (debe tener tablas).
+2. Paquete con `MANIFEST.sha256`, cifrado AES-256 con clave aleatoria envuelta con la **clave pública** RSA (`BACKUP_PUBLIC_KEY`): el servidor puede cifrar pero no descifrar.
+3. Copia externa con `rclone` (`RCLONE_REMOTE`) y verificación `rclone check` contra el original; retención local (`BACKUP_RETENTION_DAYS`) y externa (`BACKUP_REMOTE_RETENTION_DAYS`).
+4. Resultado registrado (`npm run ops:heartbeat`); el monitor alerta si falló o si no hay backup en 26 h.
 
-Restore (probarlo primero en una base temporal, **nunca** sobre producción):
-
+**Claves de backup** (una vez, en una máquina segura, no en el servidor):
 ```bash
-createdb loopchat_restore
-TARGET_DATABASE_URL=postgres://…/loopchat_restore scripts/restore.sh /backups/loopchat-db-XXXX.dump /backups/loopchat-storage-XXXX.tar.gz ./storage-restore
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 -out backup-private.pem   # guardar offline + gestor de secretos
+openssl pkey -in backup-private.pem -pubout -out backup-public.pem                      # al servidor: /etc/loopchat/backup-public.pem
 ```
 
-Evidencia de una prueba de restore en `docs/qa-final.md`.
+**Prueba de restore** (`scripts/backup-restore-test.sh`, semanal en un host separado con la clave privada): restaura el último backup en una base temporal, corre `npm run verify:restore` (conteos + secretos descifrables), borra la base y registra el heartbeat `restore_test`.
+
+**Restore manual** (siempre primero en una base temporal; el script se niega a restaurar sobre `DATABASE_URL`):
+```bash
+createdb loopchat_restore
+BACKUP_PRIVATE_KEY=/ruta/segura/backup-private.pem TARGET_DATABASE_URL=postgres://…/loopchat_restore RESTORE_STORAGE_DIR=./storage-restore scripts/restore.sh /var/backups/loopchat/loopchat-AAAAMMDDTHHMMSSZ.tar.enc
+RESTORE_DATABASE_URL=postgres://…/loopchat_restore npm run verify:restore
+```
+Luego, con la aplicación detenida, apuntar `DATABASE_URL` a la base restaurada (o restaurar sobre la base vacía de producción) y copiar `storage-restore` al volumen.
+
+**Límites conocidos:** cifrado AES-256-CBC + SHA-256 del paquete (integridad ante corrupción; para resistencia a manipulación usar un bucket con versionado/bloqueo de objetos). En Windows/Git Bash el script necesita rutas relativas; en Linux (el destino real) no.
+
+## Monitoreo y alertas
+
+`npm run monitor` (servicio `monitor` en `infra/loopchat/docker-compose.yml`, cada 60 s) revisa disponibilidad y latencia de Loopchat y Chatwoot, cola (pendientes y antigüedad), trabajos fallidos o con lease vencido, eventos de Chatwoot fallidos, mensajes salientes fallidos, fallas de IA, errores HTTP 5xx, CPU, memoria y disco, backups y pruebas de restore, y consumo mensual de IA por empresa (80 % y 100 %). Las alertas se deduplican (aviso al abrir, recordatorio cada `ALERT_REPEAT_HOURS`, aviso al resolver) y salen por `ALERT_WEBHOOK_URL` y/o `ALERT_EMAIL`, sin secretos ni contenido de conversaciones.
+
+Probar los canales: `npm run monitor -- --test`. Umbrales en `.env.example` (`ALERT_*`). Con el monitor en un contenedor, CPU/memoria son las del contenedor: para el host sumar el monitoreo del proveedor del VPS.
 
 ## Retención y privacidad
 

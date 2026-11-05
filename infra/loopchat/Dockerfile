@@ -15,7 +15,7 @@ RUN DATABASE_URL=postgres://build@localhost/build BETTER_AUTH_SECRET=build-only-
 FROM node:22-bookworm-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
-RUN apt-get update && apt-get install -y --no-install-recommends postgresql-client && rm -rf /var/lib/apt/lists/* \
+RUN apt-get update && apt-get install -y --no-install-recommends postgresql-client openssl rclone ca-certificates && rm -rf /var/lib/apt/lists/* \
   && useradd --system --uid 1001 loopchat
 COPY --from=build --chown=loopchat /app ./
 USER loopchat

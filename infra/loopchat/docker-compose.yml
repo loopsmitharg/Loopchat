@@ -13,6 +13,10 @@ x-app: &app
     DATABASE_URL: postgres://loopchat:${LOOPCHAT_DB_PASSWORD:?definir LOOPCHAT_DB_PASSWORD}@db:5432/loopchat
     STORAGE_DIR: /data/storage
     LOOPCHAT_INLINE_WORKER: "false"
+    # proxy TLS en el host (Caddy) → la app ve la IP del gateway de Docker: confiar solo en esa red
+    TRUSTED_PROXIES: ${TRUSTED_PROXIES:-172.16.0.0/12}
+    WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-8}
+    WORKER_TENANT_CONCURRENCY: ${WORKER_TENANT_CONCURRENCY:-2}
   volumes:
     - loopchat_storage:/data/storage
   depends_on: [db]
@@ -32,6 +36,16 @@ services:
   worker:
     <<: *app
     command: ["npm", "run", "worker"]
+
+  # monitor: disponibilidad, cola, errores, recursos, backups y consumo; alerta por ALERT_WEBHOOK_URL / ALERT_EMAIL
+  monitor:
+    <<: *app
+    command: ["npm", "run", "monitor", "--", "--loop", "60"]
+    environment:
+      DATABASE_URL: postgres://loopchat:${LOOPCHAT_DB_PASSWORD:?definir LOOPCHAT_DB_PASSWORD}@db:5432/loopchat
+      STORAGE_DIR: /data/storage
+      MONITOR_APP_URL: http://app:3000
+      MONITOR_DISK_PATHS: /data/storage
 
   db:
     image: postgres:16-alpine
