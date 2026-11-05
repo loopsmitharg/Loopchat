@@ -1,0 +1,8 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "chatwoot-sim", "runtimeExecutable": "npm", "runtimeArgs": ["run", "sim:chatwoot"], "port": 3011, "url": "http://localhost:3011" },
+    { "name": "ai-sim", "runtimeExecutable": "npm", "runtimeArgs": ["run", "sim:ai"], "port": 3012, "url": "http://localhost:3012" },
+    { "name": "loopchat", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev"], "port": 3000 }
+  ]
+}

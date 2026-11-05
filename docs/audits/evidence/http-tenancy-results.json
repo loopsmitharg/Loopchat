@@ -1,0 +1,104 @@
+{
+  "generatedAt": "2026-11-04T17:55:56.045Z",
+  "base": "http://localhost:3000",
+  "counts": {
+    "contacts": 1,
+    "conversations": 2,
+    "opportunities": 0,
+    "bots": 3,
+    "products": 3,
+    "knowledge": 2,
+    "ai-connections": 1,
+    "pipelines": 9,
+    "tasks": 0,
+    "members": 2,
+    "channels": 1,
+    "teams": 0
+  },
+  "results": [
+    {
+      "id": "T1",
+      "check": "Empresa A accede por ID a recursos de B (URL)",
+      "expected": "4xx sin filtrar datos",
+      "obtained": "32 intentos; respuestas no denegadas o con eco del id=0 ",
+      "verdict": "PASS"
+    },
+    {
+      "id": "T2",
+      "check": "A crea oportunidad/tarea referenciando contacto/pipeline de B",
+      "expected": "4xx",
+      "obtained": "opp(contacto B)=404; opp(pipeline B)=404; tarea(contacto B)=404",
+      "verdict": "PASS"
+    },
+    {
+      "id": "T3",
+      "check": "A fuerza la cookie de empresa con el id de B",
+      "expected": "Ignorada (sin datos de B)",
+      "obtained": "status=200; datos de B presentes=false",
+      "verdict": "PASS"
+    },
+    {
+      "id": "T4",
+      "check": "A cambia de empresa activa a B por API",
+      "expected": "4xx",
+      "obtained": "status=404",
+      "verdict": "PASS"
+    },
+    {
+      "id": "T5",
+      "check": "Rol lectura intenta crear contacto/bot y exportar",
+      "expected": "403",
+      "obtained": "contacto=403; bot=403; export=403",
+      "verdict": "PASS"
+    },
+    {
+      "id": "T6",
+      "check": "Rol agente intenta credenciales IA, datos de empresa y auditoría",
+      "expected": "403",
+      "obtained": "ai=403; tenant=403; audit=403",
+      "verdict": "PASS"
+    },
+    {
+      "id": "T7",
+      "check": "Admin de empresa llama al panel de plataforma",
+      "expected": "403/404",
+      "obtained": "tenants=403; overview=403",
+      "verdict": "PASS"
+    },
+    {
+      "id": "T8",
+      "check": "Sin sesión",
+      "expected": "401",
+      "obtained": "contacts=401; conversations=401",
+      "verdict": "PASS"
+    },
+    {
+      "id": "T9",
+      "check": "Escritura con cookie válida sin Origin / Origin ajeno (CSRF)",
+      "expected": "403",
+      "obtained": "sin origin=403; origin ajeno=403",
+      "verdict": "PASS"
+    },
+    {
+      "id": "T10",
+      "check": "Listados de credenciales no exponen secretos",
+      "expected": "Solo pistas (hint)",
+      "obtained": "ai=ok; canales=ok",
+      "verdict": "PASS"
+    },
+    {
+      "id": "T11",
+      "check": "Webhook con clave inexistente",
+      "expected": "404",
+      "obtained": "status=404",
+      "verdict": "PASS"
+    },
+    {
+      "id": "T12",
+      "check": "12 logins fallidos seguidos (entorno dev)",
+      "expected": "429 en algún punto (en producción)",
+      "obtained": "códigos=401,401,401,401,401,401,401,401,401,401,401,401",
+      "verdict": "FAIL"
+    }
+  ]
+}

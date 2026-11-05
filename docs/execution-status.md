@@ -23,6 +23,25 @@ Leyenda: `IMPLEMENTED` código completo · `VERIFIED_LOCAL` pruebas locales auto
 | 12 QA, seguridad, responsive | VERIFIED_LOCAL | Pruebas reales listadas en `qa-final.md` |
 | 13 Ship V1 | **VERIFIED_LOCAL / BLOCKED_EXTERNAL** (no `SHIPPED`) | Despliegue y validación real requieren VPS, dominio, Meta y claves IA |
 
+## Auditoría integral independiente (2026-11-04)
+
+Informes en `docs/audits/` (resumen: `08_EXECUTIVE_SUMMARY.md`). Solo diagnóstico: **no se modificó lógica productiva**. Entorno: Windows 10, Node 24.19, PostgreSQL 17.5 embebido (Docker Desktop no arrancó), simuladores de contrato; sin Meta/Chatwoot/IA reales.
+
+| Comando | Resultado |
+|---|---|
+| `npm run lint` | ✅ |
+| `npm run typecheck` | ❌ por caché corrupta en `.next/dev/types`; typecheck de fuentes excluyendo esa caché ✅ |
+| `npm run test` | ✅ 21 archivos / 209 tests (primera corrida falló 11 por base inicializada en WIN1252; recreada en UTF-8) |
+| `npm run test:e2e` | ⚠️ 25/26; el fallido (`bot-module.spec.ts` "configuración del bot accesible") pasa aislado — inestable por timeout de login bajo carga |
+| `npm run build` | ✅ |
+| `npm audit --omit=dev` | ⚠️ 4 moderadas (esbuild vía drizzle-kit) |
+| `tests/audit/conversations.audit.test.ts` (nuevo) | 50 escenarios: 41 PASS / 4 PARTIAL / 5 FAIL |
+| `tests/audit/http-tenancy.audit.mjs` (nuevo) | 11/12 PASS; 0 fugas A→B; sin 429 de login en dev (esperado) |
+| `tests/audit/ssrf.audit.test.ts` (nuevo) | Bypass con IPv6 mapeada y DNS a IP privada |
+| `tests/audit/load.audit.mjs` (nuevo) | ≈400 req/s, p95 217 ms a 50 concurrentes, 0 errores |
+
+Defectos abiertos priorizados en `docs/audits/07_ROADMAP_TO_PRODUCTION.md` (P0: validación real, mensajes concurrentes descartados, worker secuencial, IA real). Nota ponderada: **6,0/10** — listo para demo, no para piloto.
+
 ## Mejoras del módulo de chatbots (2026-10-21, tarde)
 
 Detalle técnico en `docs/bot-module.md` y `docs/insult-detection.md`. Migración nueva: `drizzle/0001_bot_module.sql` (aditiva; se aplica sola con `npm run db:migrate`, incluido en `iniciar-demo.cmd`).

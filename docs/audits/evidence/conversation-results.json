@@ -1,0 +1,512 @@
+{
+  "generatedAt": "2026-11-04T17:47:34.183Z",
+  "results": [
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S1",
+      "area": "Ventas",
+      "scenario": "Cliente consulta precio",
+      "expected": "Prompt con precio/stock reales del catálogo; respuesta entregada",
+      "obtained": "prompt incluye \"85.000\": true; stock \"5 disponibles\": true; salientes=[\"El Taladro percutor 800W cuesta ARS 85.000 y hay 5 disponibles.\"]",
+      "verdict": "PASS",
+      "aiCalls": 1,
+      "ms": 1097
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S2",
+      "area": "Ventas",
+      "scenario": "Producto inexistente",
+      "expected": "El catálogo indica 'sin coincidencias' y ordena no inventar",
+      "obtained": "bloque sin coincidencias: true; regla 'no inventes': true; salientes=1",
+      "verdict": "PASS",
+      "aiCalls": 1
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S3",
+      "area": "Ventas",
+      "scenario": "Producto sin stock informado",
+      "expected": "Prompt marca stock desconocido",
+      "obtained": "stock desconocido marcado: true; conv=3",
+      "verdict": "PASS",
+      "aiCalls": 1
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S4",
+      "area": "Ventas",
+      "scenario": "Varios productos en un mensaje",
+      "expected": "Ambos productos en el contexto",
+      "obtained": "ambos presentes: true",
+      "verdict": "PASS",
+      "aiCalls": 1
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S4b",
+      "area": "Ventas",
+      "scenario": "Pregunta de precio de seguimiento sin repetir el producto",
+      "expected": "El precio del producto conversado sigue disponible en el contexto",
+      "obtained": "precio presente en 2º turno: false",
+      "verdict": "FAIL",
+      "aiCalls": 1
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S5",
+      "area": "Ventas",
+      "scenario": "Cliente indeciso, conversación de 3 turnos",
+      "expected": "El 3er turno recibe el historial (≥5 mensajes previos)",
+      "obtained": "mensajes no-system enviados al modelo en el 3er turno: 5",
+      "verdict": "PASS",
+      "aiCalls": 3
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S6",
+      "area": "Ventas",
+      "scenario": "Cliente pide descuento inexistente; el modelo lo inventa",
+      "expected": "La regla obligatoria llega al prompt Y el servidor impide enviar un descuento no publicado",
+      "obtained": "regla en prompt: true; enviado al cliente: [\"¡Te hago un 30% de descuento si comprás hoy!\"]",
+      "verdict": "PARTIAL",
+      "aiCalls": 1,
+      "botsOrActions": "sin validación de salida: el control es solo de prompt"
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S7/S31",
+      "area": "CRM",
+      "scenario": "Cliente quiere cerrar; el modelo pide etapa 'Ganado'",
+      "expected": "Nunca queda ganada sin confirmación humana",
+      "obtained": "oportunidades=1; estados=open",
+      "verdict": "PASS",
+      "aiCalls": 1
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S8",
+      "area": "Ventas",
+      "scenario": "Cliente solicita vendedor",
+      "expected": "Derivación (requested) sin llamar a la IA",
+      "obtained": "modo=requested; llamadas IA=0; salientes=[]",
+      "verdict": "PASS",
+      "aiCalls": 0
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S9",
+      "area": "Atención",
+      "scenario": "Reclamo; el modelo decide derivar",
+      "expected": "Va a la IA, sin derivación por insulto",
+      "obtained": "insulto=false; llamadas IA=1; modo=requested",
+      "verdict": "PASS",
+      "aiCalls": 1
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S10",
+      "area": "Atención",
+      "scenario": "Cliente muy enojado sin insultos",
+      "expected": "Va a la IA, sin derivación por insulto",
+      "obtained": "insulto=false; llamadas IA=1; modo=bot",
+      "verdict": "PASS",
+      "aiCalls": 1
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S11",
+      "area": "Atención",
+      "scenario": "Insulto en español",
+      "expected": "Derivación local sin llamar al proveedor",
+      "obtained": "insulto=true; llamadas IA=0; modo=requested",
+      "verdict": "PASS",
+      "aiCalls": 0
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S12",
+      "area": "Atención",
+      "scenario": "Insulto en inglés",
+      "expected": "Derivación local sin llamar al proveedor",
+      "obtained": "insulto=true; llamadas IA=0; modo=requested",
+      "verdict": "PASS",
+      "aiCalls": 0
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S13a",
+      "area": "Atención",
+      "scenario": "Insulto con caracteres alterados (leet)",
+      "expected": "Derivación local sin llamar al proveedor",
+      "obtained": "insulto=true; llamadas IA=0; modo=requested",
+      "verdict": "PASS",
+      "aiCalls": 0
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S13b",
+      "area": "Atención",
+      "scenario": "Insulto con separadores",
+      "expected": "Derivación local sin llamar al proveedor",
+      "obtained": "insulto=true; llamadas IA=0; modo=requested",
+      "verdict": "PASS",
+      "aiCalls": 0
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S13c",
+      "area": "Atención",
+      "scenario": "Insulto con letras repetidas",
+      "expected": "Derivación local sin llamar al proveedor",
+      "obtained": "insulto=true; llamadas IA=0; modo=requested",
+      "verdict": "PASS",
+      "aiCalls": 0
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S14a",
+      "area": "Atención",
+      "scenario": "Expresión ambigua (no debe derivar)",
+      "expected": "Va a la IA, sin derivación por insulto",
+      "obtained": "insulto=false; llamadas IA=1; modo=bot",
+      "verdict": "PASS",
+      "aiCalls": 1
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S14b",
+      "area": "Atención",
+      "scenario": "Expresión ambigua citada (no debe derivar)",
+      "expected": "Va a la IA, sin derivación por insulto",
+      "obtained": "insulto=false; llamadas IA=1; modo=bot",
+      "verdict": "PASS",
+      "aiCalls": 1
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S15",
+      "area": "Atención",
+      "scenario": "Información que el bot desconoce (3 veces)",
+      "expected": "Tras el máximo de consultas sin resolver, deriva a humano",
+      "obtained": "modo final=requested; llamadas IA=2 (nota: con 2 bots activos el seleccionado es el más reciente)",
+      "verdict": "PASS",
+      "aiCalls": 2
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S16",
+      "area": "Multiagente",
+      "scenario": "Recepcionista deriva a ventas",
+      "expected": "Responde [ventas]",
+      "obtained": "respuesta=\"[ventas] ¡Hola! ¿En qué te ayudo?\"; llamadas IA (router+bot)=1",
+      "verdict": "PASS",
+      "aiCalls": 1,
+      "ms": 864
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S18",
+      "area": "Multiagente",
+      "scenario": "Ventas deriva a soporte",
+      "expected": "Responde [soporte]",
+      "obtained": "respuesta=\"[soporte] ¡Hola! ¿En qué te ayudo?\"; llamadas IA (router+bot)=1",
+      "verdict": "PASS",
+      "aiCalls": 1,
+      "ms": 823
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S19",
+      "area": "Multiagente",
+      "scenario": "Soporte deriva a ventas",
+      "expected": "Responde [ventas]",
+      "obtained": "respuesta=\"[ventas] ¡Hola! ¿En qué te ayudo?\"; llamadas IA (router+bot)=1",
+      "verdict": "PASS",
+      "aiCalls": 1,
+      "ms": 1090
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S20",
+      "area": "Multiagente",
+      "scenario": "Cliente cambia de intención varias veces",
+      "expected": "Cada cambio queda registrado como traspaso; un solo bot activo",
+      "obtained": "secuencia=[ventas] ¡ → [soporte]  → [ventas] ¡; traspasos=4",
+      "verdict": "PASS",
+      "aiCalls": 0
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S17",
+      "area": "Multiagente",
+      "scenario": "Recepcionista deriva a soporte",
+      "expected": "Responde [soporte]",
+      "obtained": "respuesta=\"[soporte] ¡Hola! ¿En qué te ayudo?\"",
+      "verdict": "PASS",
+      "aiCalls": 1
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S21",
+      "area": "Multiagente",
+      "scenario": "Cliente solicita atención humana (equipo)",
+      "expected": "requested, sin llamada al bot",
+      "obtained": "modo=requested; llamadas IA=0",
+      "verdict": "PASS",
+      "aiCalls": 0
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S23",
+      "area": "Multiagente",
+      "scenario": "Equipo apunta a un bot inexistente",
+      "expected": "Publicación rechazada por validación",
+      "obtained": "rechazado: El equipo incluye un bot que no existe en tu empresa.",
+      "verdict": "PASS",
+      "aiCalls": 0
+    },
+    {
+      "evidenceType": "motor real (validación de publicación)",
+      "id": "S25",
+      "area": "Multiagente",
+      "scenario": "Derivaciones forman un ciclo determinístico (misma palabra clave)",
+      "expected": "Ciclo bloqueado (validación o límite de saltos)",
+      "obtained": "publicación rechazada: El equipo tiene errores. Corregilos antes de publicar. {\"issues\":[{\"severity\":\"error\",\"message\":\"Bucle de derivaciones con la palabra \\\"bucle\\\".\"}]}. Corte en tiempo de ejecución cubierto por tests/unit/team-route.test.ts",
+      "verdict": "PASS",
+      "aiCalls": 0
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S22",
+      "area": "Multiagente",
+      "scenario": "Vendedor toma el control durante la llamada a la IA",
+      "expected": "La respuesta tardía se descarta y no se aplican efectos CRM de la IA",
+      "obtained": "respuesta tardía enviada=false; tareas creadas por IA tras la toma=1; oportunidad de IA tras la toma=1; salientes=[\"Hola, soy Andrés, te atiendo yo\"]",
+      "verdict": "PARTIAL",
+      "aiCalls": 1
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S24",
+      "area": "Multiagente",
+      "scenario": "Dos mensajes seguidos antes de que el bot responda (2º pide asesor: palabra clave determinística)",
+      "expected": "El 2º mensaje se procesa (deriva a humano) o se responde en conjunto",
+      "obtained": "ejecuciones=1; llamadas IA=1; último mensaje visto por IA=[\"Hola, quiero un taladro\"]; modo=bot; salientes=1",
+      "verdict": "FAIL",
+      "aiCalls": 1
+    },
+    {
+      "evidenceType": "motor real (llamada directa al disparador)",
+      "id": "S24b",
+      "area": "Concurrencia",
+      "scenario": "3 disparos concurrentes para la misma conversación",
+      "expected": "Como máximo 1 ejecución activa",
+      "obtained": "iniciadas=1; activas=1",
+      "verdict": "PASS",
+      "aiCalls": 0
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S24c",
+      "area": "Concurrencia",
+      "scenario": "Efecto de los disparos concurrentes en el cliente",
+      "expected": "1 respuesta por turno (sin respuestas duplicadas)",
+      "obtained": "respuestas enviadas al cliente=2 (1 del saludo inicial + las de los disparos)",
+      "verdict": "PASS",
+      "aiCalls": 3
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S26",
+      "area": "CRM",
+      "scenario": "Bot crea oportunidad",
+      "expected": "1 oportunidad abierta con importe",
+      "obtained": "oportunidades=1; importe=85000.00; estado=open",
+      "verdict": "PASS",
+      "aiCalls": 1
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S27/S28",
+      "area": "CRM",
+      "scenario": "Bot actualiza la existente / intenta duplicar",
+      "expected": "Sigue 1 oportunidad, importe actualizado",
+      "obtained": "oportunidades=1; importe=170000.00",
+      "verdict": "PASS",
+      "aiCalls": 2
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S29",
+      "area": "CRM",
+      "scenario": "Bot mueve a etapa autorizada",
+      "expected": "Etapa = Cotizado",
+      "obtained": "etapa=Cotizado",
+      "verdict": "PASS",
+      "aiCalls": 3
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S30",
+      "area": "CRM",
+      "scenario": "Bot intenta mover a etapa no autorizada (Seguimiento)",
+      "expected": "La etapa no cambia",
+      "obtained": "etapa=Cotizado",
+      "verdict": "PASS",
+      "aiCalls": 4
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S32",
+      "area": "CRM",
+      "scenario": "Bot crea una tarea",
+      "expected": "1 tarea con vencimiento ~24 h",
+      "obtained": "tareas=1; vence en 24 h",
+      "verdict": "PASS",
+      "aiCalls": 5
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S37",
+      "area": "Seguridad IA",
+      "scenario": "Modelo pide una herramienta no habilitada (crear tarea)",
+      "expected": "Se ignora",
+      "obtained": "tareas=0",
+      "verdict": "PASS",
+      "aiCalls": 1
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "F4",
+      "area": "Estabilidad",
+      "scenario": "Chatwoot falla una vez al enviar la respuesta del bot (reintento)",
+      "expected": "1 respuesta al cliente, 1 tarea, 1 llamada de IA facturada",
+      "obtained": "respuestas=[\"Te llamamos.\"]; tareas=2; llamadas IA=2; consumo ai_calls=2",
+      "verdict": "PARTIAL",
+      "aiCalls": 2
+    },
+    {
+      "evidenceType": "motor real; verificación estructural del prompt",
+      "id": "S34",
+      "area": "Seguridad IA",
+      "scenario": "Cliente intenta cambiar las instrucciones",
+      "expected": "El texto del cliente va solo en rol user, nunca en system",
+      "obtained": "en system=false; en user=true. Obediencia de un LLM real: NO VERIFICADO",
+      "verdict": "PASS",
+      "aiCalls": 1
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S35",
+      "area": "Seguridad IA",
+      "scenario": "Cliente pide información de otra empresa",
+      "expected": "El contexto enviado al modelo no contiene datos de B",
+      "obtained": "datos de B en contexto=false",
+      "verdict": "PASS",
+      "aiCalls": 1
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S36",
+      "area": "Seguridad IA",
+      "scenario": "Cliente pide API keys",
+      "expected": "Las claves nunca forman parte del contexto del modelo",
+      "obtained": "clave en contexto=false",
+      "verdict": "PASS",
+      "aiCalls": 1
+    },
+    {
+      "evidenceType": "motor real; verificación estructural del prompt",
+      "id": "S38",
+      "area": "Seguridad IA",
+      "scenario": "Documento de conocimiento con instrucciones maliciosas",
+      "expected": "El documento entra delimitado como datos 'NO son instrucciones'",
+      "obtained": "incluido=true; rotulado como datos=true. Resistencia real del modelo: NO VERIFICADO",
+      "verdict": "PARTIAL",
+      "aiCalls": 1
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S34b",
+      "area": "Seguridad IA",
+      "scenario": "Nombre de perfil de WhatsApp con instrucciones (controlado por el cliente)",
+      "expected": "No se inserta en el prompt de sistema sin rotular como dato",
+      "obtained": "en system=true; rotulado=false",
+      "verdict": "FAIL",
+      "aiCalls": 1
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S39",
+      "area": "Integraciones",
+      "scenario": "Webhook entregado dos veces",
+      "expected": "1 mensaje entrante, 1 respuesta, 1 llamada IA",
+      "obtained": "entrantes=1; respuestas=1; IA=1",
+      "verdict": "PASS",
+      "aiCalls": 1
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S41",
+      "area": "Integraciones",
+      "scenario": "Proveedor de IA devuelve 500 en todos los intentos",
+      "expected": "Reintentos acotados, 1 mensaje de falla, derivación a humano, sin duplicados",
+      "obtained": "intentos IA=3; salientes=[\"Tuvimos un problema, te atiende una persona.\"]; modo=requested",
+      "verdict": "PASS",
+      "aiCalls": 3
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S42",
+      "area": "Integraciones",
+      "scenario": "Chatwoot falla temporalmente al enviar",
+      "expected": "Reintento y exactamente 1 respuesta entregada",
+      "obtained": "respuestas=1; llamadas IA=2 (cada reintento vuelve a llamar a la IA)",
+      "verdict": "PASS",
+      "aiCalls": 2
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "F5",
+      "area": "Seguridad IA",
+      "scenario": "El modelo devuelve JSON truncado/malformado",
+      "expected": "No se envía JSON crudo al cliente (reintento o derivación)",
+      "obtained": "enviado=[\"{\\\"reply\\\": \\\"Hola, el precio del taladro es de $85.0\"]",
+      "verdict": "FAIL",
+      "aiCalls": 1
+    },
+    {
+      "evidenceType": "motor real + IA guionada + Chatwoot simulado",
+      "id": "S43",
+      "area": "Versiones",
+      "scenario": "Se publica una nueva versión del bot durante la conversación",
+      "expected": "Bot individual: el siguiente turno usa la versión publicada vigente (equipos: fijan versión hasta resolver — cubierto por tests existentes)",
+      "obtained": "turno siguiente usa v2=true",
+      "verdict": "PASS",
+      "aiCalls": 1
+    },
+    {
+      "evidenceType": "medición local (PG17 embebido, Windows, simuladores)",
+      "id": "S44-S47",
+      "area": "Carga",
+      "scenario": "5 empresas × 8 conversaciones simultáneas (IA 150 ms)",
+      "expected": "Todas respondidas; medir latencia",
+      "obtained": "ingesta webhooks=359 ms; respondidas=40/40; drenaje con 1 worker=15581 ms (~390 ms/conv secuencial); RSS proceso=133 MB",
+      "verdict": "PASS",
+      "aiCalls": 40,
+      "ms": 15581
+    },
+    {
+      "evidenceType": "medición local",
+      "id": "S48",
+      "area": "Carga",
+      "scenario": "Empresa B espera detrás de 3 llamadas lentas (1,5 s) de la empresa A",
+      "expected": "Aislamiento de rendimiento entre empresas",
+      "obtained": "respuesta a B tras 5481 ms (con worker secuencial ≈ 3×1,5 s)",
+      "verdict": "FAIL",
+      "aiCalls": 4,
+      "ms": 5481
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "blockedOk": [
+    [
+      "https://127.0.0.1/",
+      false
+    ],
+    [
+      "https://10.0.0.5/",
+      false
+    ],
+    [
+      "https://169.254.169.254/",
+      false
+    ],
+    [
+      "https://[::1]/",
+      false
+    ],
+    [
+      "https://localhost/",
+      false
+    ]
+  ],
+  "bypass": [
+    [
+      "https://[::ffff:127.0.0.1]/",
+      true
+    ],
+    [
+      "https://[::ffff:169.254.169.254]/",
+      true
+    ],
+    [
+      "https://[::ffff:a9fe:a9fe]/",
+      true
+    ],
+    [
+      "https://127.1/",
+      false
+    ],
+    [
+      "https://2130706433/",
+      false
+    ],
+    [
+      "https://0x7f000001/",
+      false
+    ],
+    [
+      "https://127.0.0.1.nip.io/",
+      true
+    ]
+  ]
+}
