@@ -159,7 +159,7 @@ async function handleMessageCreated(tenantId: string, p: CwWebhookMessage) {
     if (marker) {
       await tx
         .update(messages)
-        .set({ chatwootMessageId: p.id, status: sql`case when ${messages.status} = 'pending' then 'sent' else ${messages.status} end`, updatedAt: new Date() })
+        .set({ chatwootMessageId: p.id, status: sql`case when ${messages.status} in ('pending', 'sending') then 'sent' else ${messages.status} end`, updatedAt: new Date() })
         .where(and(eq(messages.tenantId, tenantId), eq(messages.idempotencyKey, marker)));
       return { kind: "own_echo" as const };
     }

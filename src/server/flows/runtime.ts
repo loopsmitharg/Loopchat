@@ -1,8 +1,9 @@
 import "server-only";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
+import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import type { FlowGraph, FlowNode } from "@/lib/flow/types";
 import { db } from "../db";
-import { botProducts, botTeams, botVersions, bots, contacts, conversations, flowRunSteps, flowRuns, tenants, type ConversationBotState } from "../db/schema";
+import { aiTurnResults, botProducts, botTeams, botVersions, bots, contacts, conversations, flowRunSteps, flowRuns, tenants, type ConversationBotState } from "../db/schema";
 import { isWithinBusinessHours } from "@/lib/business-hours";
 import type { Ctx } from "../authz/context";
 import { AiProviderError } from "../ai/types";
@@ -12,7 +13,8 @@ import { log } from "../log";
 import { loadProviderForTenant } from "../services/ai-connections";
 import { retryOutbound, sendOutbound } from "../services/outbound";
 import { completeAiCall, getPlanState, isOperational, reserveAiCall } from "../services/usage";
-import { applyOpportunity, runAiTurn, type TurnLog } from "./ai-turn";
+import { applyOpportunity, BotAuthorityLost, runAiTurn, type BotAuthority, type TurnLog } from "./ai-turn";
+import { drainPendingMessage } from "./trigger";
 import { runFlow, type AiNodeResult, type FlowContext, type FlowEffects, type RunOutcome } from "./interpreter";
 import { checkInsult, handoffWithPolicy, OUT_OF_HOURS_NOTE, type HandoffCode } from "./policy";
 import { settingsFromVersion, type BotSettings } from "./settings";
@@ -62,6 +64,7 @@ function mergeTurn(m: RunMetrics, t: TurnLog) {
 
 export function makeRuntimeEffects(run: RunRow, bot: typeof bots.$inferSelect, settings: BotSettings, attempt: number, metrics: RunMetrics): FlowEffects {
   const ctx: Ctx = { tenantId: run.tenantId, actor: { kind: "bot", botId: bot.id, runId: run.id } };
+  const authority: BotAuthority = { runId: run.id, conversationId: run.conversationId, botId: bot.id, leaseOwner: run.leaseOwner };
   return {
     now: () => new Date(),
     async stillInControl() {
@@ -90,10 +93,10 @@ export function makeRuntimeEffects(run: RunRow, bot: typeof bots.$inferSelect, s
       }
     },
     async ai(node, fctx, key) {
-      return runAiNode(ctx, run, settings, node, fctx, `${key}:a${attempt}`, metrics);
+      return runAiNode(ctx, run, settings, node, fctx, key, attempt, metrics, authority);
     },
     async opportunity(data, fctx) {
-      await applyOpportunity(ctx, run.tenantId, run.conversationId, { stageId: data.stageId ?? null, title: data.title, amount: data.amount ?? null }, fctx.contactName ?? null);
+      await applyOpportunity(ctx, run.tenantId, run.conversationId, { stageId: data.stageId ?? null, title: data.title, amount: data.amount ?? null }, fctx.contactName ?? null, authority);
     },
     async handoff(reason, meta) {
       const code = (meta.code || "flow") as HandoffCode;
@@ -128,7 +131,7 @@ async function conversationHistory(tenantId: string, conversationId: string) {
   }
 }
 
-async function runAiNode(ctx: Ctx, run: RunRow, settings: BotSettings, node: FlowNode<"ai">, fctx: FlowContext, key: string, metrics: RunMetrics): Promise<AiNodeResult> {
+async function runAiNode(ctx: Ctx, run: RunRow, settings: BotSettings, node: FlowNode<"ai">, fctx: FlowContext, key: string, attempt: number, metrics: RunMetrics, authority: BotAuthority): Promise<AiNodeResult> {
   if (!settings.aiConnectionId) return { handoff: { reason: "El bot no tiene proveedor de IA configurado", code: "no_ai" } };
   const loaded = await loadProviderForTenant(run.tenantId, settings.aiConnectionId);
   if (!loaded) return { handoff: { reason: "La conexión de IA fue revocada", code: "no_ai" } };
@@ -150,12 +153,20 @@ async function runAiNode(ctx: Ctx, run: RunRow, settings: BotSettings, node: Flo
     transferNote: transferNoteFor(conv, run.botId),
     botName: (await db.query.bots.findFirst({ columns: { name: true }, where: eq(bots.id, run.botId) }))?.name ?? "",
     team: conv?.teamVersionId ? await teamContext(run.tenantId, conv.teamVersionId, run.botId) : null,
+    actionKey: key,
+    authority,
     async callModel(req) {
-      const reservation = await reserveAiCall(run.tenantId, key, { provider: loaded.row.provider, model });
+      // reintento de un paso cuya generación ya se pagó (p. ej. falló el envío): se reutiliza, sin volver a llamar
+      const cached = await db.query.aiTurnResults.findFirst({ where: and(eq(aiTurnResults.key, key), eq(aiTurnResults.tenantId, run.tenantId)) });
+      if (cached) return { text: cached.text, inputTokens: 0, outputTokens: 0, model, cached: true };
+      const budget = await aiBudgetExceeded(run, settings, metrics);
+      if (budget) return { handoff: budget };
+      const reservation = await reserveAiCall(run.tenantId, `${key}:a${attempt}`, { provider: loaded.row.provider, model });
       if (!reservation.ok) return { handoff: { reason: reservation.reason === "quota_exceeded" ? "Cupo mensual de IA agotado" : "Suscripción inactiva", code: "quota" } };
       try {
         const r = await loaded.provider.chat({ model, system: req.system, messages: req.messages, jsonMode: true, maxTokens: req.maxTokens, ...(req.temperature !== null && req.temperature !== undefined ? { temperature: req.temperature } : {}) });
         await completeAiCall(reservation.eventId, "success", { inputTokens: r.inputTokens, outputTokens: r.outputTokens });
+        await db.insert(aiTurnResults).values({ key, tenantId: run.tenantId, text: r.text, inputTokens: r.inputTokens ?? null, outputTokens: r.outputTokens ?? null }).onConflictDoNothing();
         return r;
       } catch (e) {
         await completeAiCall(reservation.eventId, "failure", { detail: (e as Error).message });
@@ -166,6 +177,30 @@ async function runAiNode(ctx: Ctx, run: RunRow, settings: BotSettings, node: Flo
   });
   mergeTurn(metrics, turn);
   return result;
+}
+
+/**
+ * Presupuesto de IA (antes de CADA llamada, incluida la ejecución en curso): por conversación y por
+ * contacto en 24 h. El cupo mensual de la empresa se controla aparte en reserveAiCall.
+ */
+async function aiBudgetExceeded(run: RunRow, settings: BotSettings, metrics: RunMetrics): Promise<{ reason: string; code: "usage_limit" } | null> {
+  const op = settings.config.operation;
+  if (op.maxAiCallsPerConversation > 0) {
+    const [{ n }] = await db
+      .select({ n: sql<number>`coalesce(sum((${flowRuns.metrics}->>'aiCalls')::int), 0)::int` })
+      .from(flowRuns)
+      .where(and(eq(flowRuns.tenantId, run.tenantId), eq(flowRuns.conversationId, run.conversationId), ne(flowRuns.id, run.id)));
+    if (n + metrics.aiCalls >= op.maxAiCallsPerConversation) return { reason: `Se alcanzó el límite de ${op.maxAiCallsPerConversation} llamadas a la IA en la conversación`, code: "usage_limit" };
+  }
+  if (op.maxAiCallsPerContactPerDay > 0) {
+    const r = await db.execute<{ n: number }>(sql`
+      select coalesce(sum((f.metrics->>'aiCalls')::int), 0)::int as n
+      from flow_runs f join conversations c on c.id = f.conversation_id
+      where f.tenant_id = ${run.tenantId} and f.id <> ${run.id} and f.started_at > now() - interval '24 hours'
+        and c.contact_id = (select contact_id from conversations where id = ${run.conversationId})`);
+    if (Number(r.rows[0]?.n ?? 0) + metrics.aiCalls >= op.maxAiCallsPerContactPerDay) return { reason: `El contacto alcanzó el límite de ${op.maxAiCallsPerContactPerDay} llamadas a la IA en 24 h`, code: "usage_limit" };
+  }
+  return null;
 }
 
 /** Equipo de la conversación: nombres y roles para la coordinación entre bots. */
@@ -189,7 +224,7 @@ function scrub(context: FlowContext): Record<string, unknown> {
   return { intent: context.intent ?? null, vars: Object.fromEntries(Object.entries(context.vars).filter(([k]) => !hidden.has(k))) };
 }
 
-export type RunJob = { runId: string; mode: "start" | "reply" | "timeout"; message?: string; expectStep?: number };
+export type RunJob = { runId: string; mode: "start" | "reply" | "timeout"; message?: string; expectStep?: number; messageId?: number; hasAttachments?: boolean };
 
 const sameDay = (iso: string | undefined, now: Date) => Boolean(iso) && iso!.slice(0, 10) === now.toISOString().slice(0, 10);
 
@@ -272,17 +307,49 @@ async function preAiGuards(run: RunRow, bot: typeof bots.$inferSelect, settings:
  * condicional; otro worker no puede tomarla a la vez. Errores transitorios se reintentan
  * desde el último paso persistido; agotados los reintentos se deriva a un humano.
  */
-export async function executeRunJob(job: RunJob, attempt: number, maxAttempts: number) {
+const LEASE_SECONDS = () => (Number(process.env.WORKER_LEASE_SECONDS) > 0 ? Number(process.env.WORKER_LEASE_SECONDS) : 120);
+
+/**
+ * Ejecuta una ejecución y, al terminar (estado final o en espera), procesa el mensaje que haya llegado
+ * mientras tanto. Si la ejecución se reintenta (excepción), el pendiente queda para el próximo intento.
+ */
+/** Mensaje de respuesta que no pudo aplicarse a la ejecución: queda como pendiente de la conversación. */
+async function parkReply(run: RunRow, job: RunJob) {
+  await db.execute(sql`
+    update conversations set pending_bot_message = ${JSON.stringify({ chatwootMessageId: job.messageId, text: job.message ?? "", hasAttachments: Boolean(job.hasAttachments), at: new Date().toISOString() })}::jsonb
+    where id = ${run.conversationId} and tenant_id = ${run.tenantId}
+      and (pending_bot_message is null or (pending_bot_message->>'chatwootMessageId')::bigint < ${job.messageId!})`);
+}
+
+export async function executeRunJob(job: RunJob, attempt: number, maxAttempts: number, lease: { owner: string } = { owner: `local:${randomUUID()}` }) {
+  const res = await executeRunJobInner(job, attempt, maxAttempts, lease);
+  const after = await db.query.flowRuns.findFirst({ columns: { tenantId: true, conversationId: true, status: true }, where: eq(flowRuns.id, job.runId) });
+  if (after && after.status !== "queued" && after.status !== "running") {
+    await drainPendingMessage(after.tenantId, after.conversationId).catch((e) => log.warn("flow.pending_drain_failed", { runId: job.runId, err: (e as Error).message }));
+  }
+  return res;
+}
+
+async function executeRunJobInner(job: RunJob, attempt: number, maxAttempts: number, lease: { owner: string }): Promise<{ skipped?: boolean; outcome?: string }> {
   const run0 = await db.query.flowRuns.findFirst({ where: eq(flowRuns.id, job.runId) });
-  if (!run0 || ["completed", "failed", "cancelled", "handed_off"].includes(run0.status)) return { skipped: true };
+  if (!run0 || ["completed", "failed", "cancelled", "handed_off"].includes(run0.status)) {
+    // respuesta a una ejecución que ya terminó: el mensaje no se pierde, se procesa como nuevo
+    if (run0 && job.mode === "reply" && job.messageId) await parkReply(run0, job);
+    return { skipped: true };
+  }
   if (job.mode === "timeout" && (run0.status !== "waiting" || run0.stepCount !== job.expectStep)) return { skipped: true };
-  const claimable = job.mode === "start" ? ["queued", "running"] : ["waiting", "running"];
+  // lease: una ejecución "running" solo se retoma si el lease del proceso anterior venció (caída)
+  const claimable = job.mode === "start" ? ["queued"] : ["waiting"];
   const claimed = await db
     .update(flowRuns)
-    .set({ status: "running", attempts: sql`${flowRuns.attempts} + 1`, updatedAt: new Date() })
-    .where(and(eq(flowRuns.id, run0.id), inArray(flowRuns.status, claimable as never)))
+    .set({ status: "running", attempts: sql`${flowRuns.attempts} + 1`, leaseOwner: lease.owner, leaseUntil: sql`now() + (${LEASE_SECONDS()} || ' seconds')::interval`, updatedAt: new Date() })
+    .where(and(eq(flowRuns.id, run0.id), sql`(${flowRuns.status} in (${sql.join(claimable.map((c) => sql`${c}`), sql`, `)}) or (${flowRuns.status} = 'running' and (${flowRuns.leaseUntil} is null or ${flowRuns.leaseUntil} < now())))`))
     .returning();
-  if (claimed.length === 0) return { skipped: true };
+  if (claimed.length === 0) {
+    // otra instancia la está ejecutando: si es una respuesta del cliente, queda pendiente para cuando termine
+    if (job.mode === "reply" && job.messageId) await parkReply(run0, job);
+    return { skipped: true };
+  }
   let run = claimed[0];
   let version = await db.query.botVersions.findFirst({ where: eq(botVersions.id, run.versionId) });
   let bot = await db.query.bots.findFirst({ where: eq(bots.id, run.botId) });
@@ -390,10 +457,16 @@ export async function executeRunJob(job: RunJob, attempt: number, maxAttempts: n
     result = await runFlow(graph, { currentNodeId: run.currentNodeId, context, stepCount: run.stepCount }, effects, { mode, message: job.message, runKey: run.id });
   } catch (e) {
     const err = e as Error;
-    const retryable = e instanceof FlowStepError ? e.retryable : true;
     await saveMetrics();
+    // el bot perdió el control (persona tomó la conversación, pausa o derivación): se cancela sin efectos
+    if (e instanceof BotAuthorityLost) {
+      await finish("cancelled", err.message);
+      return { outcome: "cancelled" };
+    }
+    const retryable = e instanceof FlowStepError ? e.retryable : true;
     if (retryable && attempt < Math.min(maxAttempts, settings.config.operation.retries)) {
-      await db.update(flowRuns).set({ status: "running", lastError: err.message.slice(0, 300), updatedAt: new Date() }).where(eq(flowRuns.id, run.id));
+      // libera el lease para que el reintento (otro proceso o este) pueda retomarla
+      await db.update(flowRuns).set({ status: "running", lastError: err.message.slice(0, 300), leaseUntil: new Date(), updatedAt: new Date() }).where(and(eq(flowRuns.id, run.id), eq(flowRuns.leaseOwner, lease.owner)));
       throw e; // el job se reintenta con backoff
     }
     // fallback: derivar a humano, sin respuestas duplicadas (mensaje fijo opcional, sin IA)
@@ -437,4 +510,24 @@ export async function executeRunJob(job: RunJob, attempt: number, maxAttempts: n
       break;
   }
   return { outcome: outcome.status };
+}
+
+/**
+ * Mantenimiento: ejecuciones que quedaron "running"/"queued" sin trabajo vivo (proceso caído y trabajo
+ * agotado o perdido) bloquearían la conversación para siempre por el índice de una activa por
+ * conversación. Se marcan fallidas y se procesa el mensaje pendiente, si hay.
+ */
+export async function recoverAbandonedRuns(graceSeconds = 600) {
+  const res = await db.execute<{ tenant_id: string; conversation_id: string }>(sql`
+    update flow_runs f set status = 'failed', last_error = 'Ejecución abandonada (proceso caído); recuperada por mantenimiento', finished_at = now(), updated_at = now()
+    where f.status in ('queued', 'running')
+      and coalesce(f.lease_until, f.updated_at) < now() - (${graceSeconds} || ' seconds')::interval
+      and not exists (
+        select 1 from jobs j
+        where j.kind = 'flow.run' and j.status in ('queued', 'running') and j.payload->>'runId' = f.id::text
+      )
+    returning f.tenant_id, f.conversation_id`);
+  for (const r of res.rows) await drainPendingMessage(r.tenant_id, r.conversation_id).catch((e) => log.warn("flow.recover_drain_failed", { err: (e as Error).message }));
+  if (res.rows.length) log.warn("flow.recovered_abandoned_runs", { count: res.rows.length });
+  return res.rows.length;
 }

@@ -1,7 +1,7 @@
 import "server-only";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import type { AiTool, FlowNode } from "@/lib/flow/types";
-import { db } from "../db";
+import { db, type Tx } from "../db";
 import { contacts, conversations, opportunities, pipelines, stages, type ConversationBotState, type LeadData } from "../db/schema";
 import { pipelineScope } from "./pipeline-scope";
 import { INSTRUCTIONS_VERSION, type PolicyInput } from "@/lib/instructions/build";
@@ -38,7 +38,42 @@ export type TurnLog = {
   instructions?: { version: string; hash: string };
 };
 
-export type ModelCall = (req: { system: string; messages: ReturnType<typeof historyToMessages>; maxTokens: number; temperature?: number | null }) => Promise<{ text: string; inputTokens?: number; outputTokens?: number } | { handoff: { reason: string; code: string } }>;
+export type ModelCall = (req: { system: string; messages: ReturnType<typeof historyToMessages>; maxTokens: number; temperature?: number | null }) => Promise<{ text: string; inputTokens?: number; outputTokens?: number; truncated?: boolean; cached?: boolean } | { handoff: { reason: string; code: string } }>;
+
+/** Quién tiene la autoridad para aplicar efectos comerciales en nombre del bot. */
+export type BotAuthority = { runId: string; conversationId: string; botId: string; leaseOwner: string | null };
+
+export class BotAuthorityLost extends Error {
+  constructor(reason = "El bot ya no tiene el control de la conversación (intervención humana, pausa o derivación).") {
+    super(reason);
+  }
+}
+
+/**
+ * Aplica un efecto comercial del bot SOLO si sigue en control, de forma atómica respecto de una toma
+ * humana: bloquea (FOR SHARE) la conversación y la ejecución y verifica modo bot, bot activo y
+ * ejecución vigente con su lease. La toma humana (responder, pausar, derivar) actualiza esas filas,
+ * así que espera a que termine este efecto o lo invalida antes de que empiece.
+ */
+export async function withBotAuthority<T>(authority: BotAuthority | null | undefined, fn: (tx: Tx | typeof db) => Promise<T>): Promise<T> {
+  if (!authority) return fn(db);
+  return db.transaction(async (tx) => {
+    const r = await tx.execute<{ attention_mode: string; team_id: string | null; active_bot_id: string | null; status: string; lease_owner: string | null }>(sql`
+      select c.attention_mode, c.team_id, c.active_bot_id, f.status, f.lease_owner
+      from conversations c join flow_runs f on f.conversation_id = c.id
+      where c.id = ${authority.conversationId} and f.id = ${authority.runId}
+      for share of c, f`);
+    const row = r.rows[0];
+    const ok =
+      row &&
+      row.attention_mode === "bot" &&
+      row.status === "running" &&
+      (!authority.leaseOwner || row.lease_owner === authority.leaseOwner) &&
+      !(row.team_id && row.active_bot_id && row.active_bot_id !== authority.botId);
+    if (!ok) throw new BotAuthorityLost();
+    return fn(tx);
+  });
+}
 
 export type TurnEnv = {
   tenantId: string;
@@ -63,6 +98,10 @@ export type TurnEnv = {
   botName?: string;
   /** Equipo de la conversación (coordinación entre bots). */
   team?: PolicyInput["team"];
+  /** Clave estable del paso (ejecución:nodo:paso): idempotencia de las acciones ante reintentos. */
+  actionKey?: string;
+  /** Autoridad del bot para efectos reales (runtime). null/ausente en simulación. */
+  authority?: BotAuthority | null;
 };
 
 export type SimState = { unresolvedStreak: number; opps?: Record<string, { stageId: string; title: string; stageName: string; pipelineName: string }> };
@@ -81,6 +120,9 @@ export async function runAiTurn(env: TurnEnv): Promise<{ result: AiNodeResult; l
 
   const scope = await pipelineScope(tenantId, cfg, env.contactId, env.simState?.opps);
   const { opp, all: allStages, allowed: okStages } = scope;
+  // cotización: misma política que cualquier movimiento de etapa (herramienta update_stage y etapa permitida)
+  const quoteStage = tools.includes("update_stage") && scope.quoteStage && okStages.some((st) => st.id === scope.quoteStage!.id) ? scope.quoteStage : null;
+  if (scope.quoteStage && !quoteStage) log.blocked.push("cotización: mover a la etapa de cotización requiere la herramienta de etapas y que la etapa esté permitida");
   // mover etapa solo aplica con oportunidad abierta (o al crearla en la simulación)
   const hasSimOpp = Boolean(env.simState?.opps && Object.keys(env.simState.opps).some((p) => scope.pipelineIds.includes(p)));
   // (al crear una oportunidad también puede elegir la etapa inicial, dentro de las permitidas)
@@ -135,7 +177,7 @@ export async function runAiTurn(env: TurnEnv): Promise<{ result: AiNodeResult; l
     trackResolution: cfg.hours.maxUnresolvedAttempts > 0,
     outOfHoursNote: env.outOfHoursNote ?? null,
     opportunityPolicy: cfg.pipeline.createOpportunity === "any_inquiry" ? "any_inquiry" : "purchase_intent",
-    quoteEnabled: Boolean(scope.quoteStage),
+    quoteEnabled: Boolean(quoteStage),
     transferNote: env.transferNote ?? null,
   });
   const system = built.system;
@@ -145,11 +187,12 @@ export async function runAiTurn(env: TurnEnv): Promise<{ result: AiNodeResult; l
   const out = await env.callModel({ system, messages: historyToMessages(env.history, env.message), maxTokens: cfg.operation.maxResponseTokens ?? 600, temperature: cfg.operation.temperature });
   log.latencyMs = Date.now() - t0;
   if ("handoff" in out) return { result: { handoff: out.handoff }, log };
-  log.aiCalled = true;
+  // generación reutilizada de un intento anterior: no es una llamada nueva al proveedor
+  log.aiCalled = !out.cached;
   log.inputTokens = out.inputTokens ?? 0;
   log.outputTokens = out.outputTokens ?? 0;
 
-  const decision = parseAiDecision(out.text, tools, stageNames, { productRefs: [...refMap.keys()], fieldKeys: fields.map((f) => f.key), allStageNames: allStages.map((s) => s.name), quoteEnabled: Boolean(scope.quoteStage) });
+  const decision = parseAiDecision(out.text, tools, stageNames, { productRefs: [...refMap.keys()], fieldKeys: fields.map((f) => f.key), allStageNames: allStages.map((s) => s.name), quoteEnabled: Boolean(quoteStage) });
   log.blocked.push(...decision.blocked);
   for (const b of decision.blocked) log.actions.push({ kind: "blocked", text: `Acción bloqueada: ${b}` });
   if (decision.intent) log.tools.push("classify");
@@ -166,6 +209,7 @@ export async function runAiTurn(env: TurnEnv): Promise<{ result: AiNodeResult; l
     try {
       return await fn();
     } catch (e) {
+      if (e instanceof BotAuthorityLost) throw e;
       log.actions.push({ kind: "blocked", text: `No se pudo ejecutar la acción "${name}": ${(e as Error).message.slice(0, 120)}` });
       toolFailure = toolFailure ?? { reason: `Error al ejecutar la acción "${name}"`, code: "tool_error" };
       return null;
@@ -173,10 +217,10 @@ export async function runAiTurn(env: TurnEnv): Promise<{ result: AiNodeResult; l
   }
 
   // oportunidad (deduplicada: una abierta por contacto y pipeline) + cotización
-  if (decision.quote && scope.quoteStage && !decision.opportunity?.stage) decision.opportunity = { ...(decision.opportunity ?? {}), stage: scope.quoteStage.name };
+  if (decision.quote && quoteStage && !decision.opportunity?.stage) decision.opportunity = { ...(decision.opportunity ?? {}), stage: quoteStage.name };
   if (decision.opportunity) {
     const stageName = decision.opportunity.stage ?? null;
-    const stage = stageName ? (okStages.find((s) => s.name === stageName) ?? (decision.quote && scope.quoteStage?.name === stageName ? scope.quoteStage : null)) : null;
+    const stage = stageName ? (okStages.find((s) => s.name === stageName) ?? null) : null;
     const productIds = (decision.opportunity.products ?? []).map((r) => refMap.get(r)?.id).filter((x): x is string => Boolean(x));
     const creating = !opp && !(hasSimOpp && env.dryRun);
     if (creating && !tools.includes("create_opportunity")) {
@@ -189,7 +233,7 @@ export async function runAiTurn(env: TurnEnv): Promise<{ result: AiNodeResult; l
         did(mode, `${creating ? "Crearía" : "Actualizaría"} ${label}`);
         if (env.simState && pipelineId && targetStage) env.simState.opps = { ...(env.simState.opps ?? {}), [pipelineId]: { stageId: targetStage.id, title: decision.opportunity.title || env.simState.opps?.[pipelineId]?.title || "Consulta", stageName: targetStage.name, pipelineName: scope.pipelineNames[pipelineId] ?? "" } };
       } else if (env.conversationId && pipelineId) {
-        const r = await guardTool("oportunidad", () => applyOpportunity(env.ctx, tenantId, env.conversationId!, { pipelineId, stageId: targetStage?.id ?? null, title: decision.opportunity!.title, amount: decision.opportunity!.amount ?? null, productIds, ownerUserId: cfg.pipeline.defaultOwnerUserId }, env.contactName));
+        const r = await guardTool("oportunidad", () => applyOpportunity(env.ctx, tenantId, env.conversationId!, { pipelineId, stageId: targetStage?.id ?? null, title: decision.opportunity!.title, amount: decision.opportunity!.amount ?? null, productIds, ownerUserId: cfg.pipeline.defaultOwnerUserId }, env.contactName, env.authority));
         if (r) did(mode, `${r === "created" ? "Creó" : "Actualizó"} ${label}`);
       }
       log.tools.push(stage ? "update_stage" : "create_opportunity");
@@ -205,7 +249,9 @@ export async function runAiTurn(env: TurnEnv): Promise<{ result: AiNodeResult; l
       const wanted = cfg.tools.taskAssignee === "conversation" ? (conv?.assigneeUserId ?? null) : cfg.tools.taskAssignee === "user" ? cfg.tools.taskAssigneeUserId : null;
       assignee = wanted && (await assignableMembers(tenantId, [wanted])).has(wanted) ? wanted : null;
       const o = scope.pipelineIds.length ? await db.query.opportunities.findFirst({ where: and(eq(opportunities.tenantId, tenantId), eq(opportunities.contactId, conv?.contactId ?? ""), eq(opportunities.status, "open"), inArray(opportunities.pipelineId, scope.pipelineIds)) }) : null;
-      await guardTool("tarea", () => createTask(env.ctx, { title: decision.task!.title, dueAt: new Date(Date.now() + hours * 3600_000), opportunityId: o?.id ?? null, contactId: conv?.contactId ?? null, assigneeUserId: assignee }));
+      await guardTool("tarea", () =>
+        withBotAuthority(env.authority, (tx) => createTask(env.ctx, { title: decision.task!.title, dueAt: new Date(Date.now() + hours * 3600_000), opportunityId: o?.id ?? null, contactId: conv?.contactId ?? null, assigneeUserId: assignee }, { tx, idempotencyKey: env.actionKey ? `${env.actionKey}:task` : null })),
+      );
     }
     did(mode, `${env.dryRun ? "Crearía" : "Creó"} tarea "${decision.task.title}" (vence en ${hours} h)`);
     log.tools.push("create_task");
@@ -216,7 +262,8 @@ export async function runAiTurn(env: TurnEnv): Promise<{ result: AiNodeResult; l
     if (env.dryRun) {
       for (const [k, v] of Object.entries(decision.collected)) did(mode, `Guardaría dato comercial ${k} = "${v}"`);
     } else if (env.contactId) {
-      const r = await applyCollectedLeadData(tenantId, env.contactId, fields.map((f) => f.key), decision.collected);
+      const contactId = env.contactId;
+      const r = await withBotAuthority(env.authority, (tx) => applyCollectedLeadData(tenantId, contactId, fields.map((f) => f.key), decision.collected, tx));
       for (const a of r.applied) did(mode, `Guardó dato comercial ${a.key} = "${a.value}"`);
       for (const x of r.rejected) log.actions.push({ kind: "blocked", text: `Dato descartado: ${x.key} (${x.reason})` });
     }
@@ -251,7 +298,8 @@ export async function runAiTurn(env: TurnEnv): Promise<{ result: AiNodeResult; l
     if (log.products.length) state.productIds = [...new Set([...log.products.map((p) => p.id), ...(state.productIds ?? [])])].slice(0, 20);
     if (decision.resolved === false) state.unresolvedStreak = (state.unresolvedStreak ?? 0) + 1;
     else if (decision.resolved === true) state.unresolvedStreak = 0;
-    await db.update(conversations).set({ botState: state }).where(and(eq(conversations.id, env.conversationId), eq(conversations.tenantId, tenantId)));
+    const convId = env.conversationId;
+    await withBotAuthority(env.authority, (tx) => tx.update(conversations).set({ botState: state }).where(and(eq(conversations.id, convId), eq(conversations.tenantId, tenantId))));
     if (!handoff && max > 0 && (state.unresolvedStreak ?? 0) >= max) handoff = { reason: `${max} consulta(s) seguidas sin resolver`, code: "max_attempts" };
   }
   if (handoff) log.tools.push("handoff");
@@ -270,6 +318,7 @@ async function applyOpportunity(
   conversationId: string,
   data: { pipelineId?: string | null; stageId: string | null; title?: string; amount: number | null; productIds?: string[]; ownerUserId?: string | null },
   contactName: string | null,
+  authority?: BotAuthority | null,
 ): Promise<"created" | "updated" | null> {
   const conv = await db.query.conversations.findFirst({ where: and(eq(conversations.id, conversationId), eq(conversations.tenantId, tenantId)) });
   if (!conv) return null;
@@ -279,7 +328,8 @@ async function applyOpportunity(
   if (!pipelineId) return null;
   const pid = pipelineId;
   const owner = data.ownerUserId && (await isAssignableMember(tenantId, data.ownerUserId)) ? data.ownerUserId : null;
-  const result = await db.transaction(async (tx) => {
+  const run = (fn: (tx: Tx) => Promise<"created" | "updated" | null>) => (authority ? withBotAuthority(authority, (tx) => fn(tx as Tx)) : db.transaction(fn));
+  return run(async (tx) => {
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`opp:${conv.contactId}:${pid}`}))`);
     const open = await tx.query.opportunities.findFirst({ where: and(eq(opportunities.tenantId, tenantId), eq(opportunities.contactId, conv.contactId), eq(opportunities.pipelineId, pid), eq(opportunities.status, "open")) });
     if (!open) {
@@ -289,23 +339,20 @@ async function applyOpportunity(
         tx,
       );
       if (data.productIds?.length) await tx.update(opportunities).set({ productIds: [...new Set(data.productIds)] }).where(eq(opportunities.id, created.id));
-      return { kind: "created" as const, open: null };
+      return "created";
     }
-    return { kind: "existing" as const, open };
+    const patch: Record<string, unknown> = { expectedVersion: open.version };
+    if (data.stageId && data.stageId !== open.stageId) patch.stageId = data.stageId;
+    if (data.amount !== undefined && data.amount !== null) patch.amount = data.amount;
+    if (data.title && data.title.trim() && open.title.startsWith("Consulta de")) patch.title = data.title.trim();
+    const newProducts = (data.productIds ?? []).filter((p) => !open.productIds.includes(p));
+    if (newProducts.length) await tx.update(opportunities).set({ productIds: [...open.productIds, ...newProducts].slice(0, 30) }).where(eq(opportunities.id, open.id));
+    if (Object.keys(patch).length > 1) {
+      await updateOpportunity(ctx, open.id, patch as never, tx);
+      return "updated";
+    }
+    return newProducts.length ? "updated" : null;
   });
-  if (result.kind === "created") return "created";
-  const open = result.open!;
-  const patch: Record<string, unknown> = { expectedVersion: open.version };
-  if (data.stageId && data.stageId !== open.stageId) patch.stageId = data.stageId;
-  if (data.amount !== undefined && data.amount !== null) patch.amount = data.amount;
-  if (data.title && data.title.trim() && open.title.startsWith("Consulta de")) patch.title = data.title.trim();
-  const newProducts = (data.productIds ?? []).filter((p) => !open.productIds.includes(p));
-  if (newProducts.length) await db.update(opportunities).set({ productIds: [...open.productIds, ...newProducts].slice(0, 30) }).where(eq(opportunities.id, open.id));
-  if (Object.keys(patch).length > 1) {
-    await updateOpportunity(ctx, open.id, patch as never);
-    return "updated";
-  }
-  return newProducts.length ? "updated" : null;
 }
 
 export { applyOpportunity };

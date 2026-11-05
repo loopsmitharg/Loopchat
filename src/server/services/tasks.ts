@@ -1,7 +1,7 @@
 import "server-only";
 import { and, asc, eq, isNull, lte, or, sql } from "drizzle-orm";
 import { z } from "zod";
-import { db } from "../db";
+import { db, type Tx } from "../db";
 import { contacts, memberships, opportunities, tasks, user as userTable } from "../db/schema";
 import { actorUserId, assertCan, type Ctx } from "../authz/context";
 import { badRequest, notFound } from "../http/errors";
@@ -16,22 +16,31 @@ export const taskSchema = z.object({
   opportunityId: z.string().uuid().optional().nullable(),
 });
 
-export async function createTask(ctx: Ctx, input: z.input<typeof taskSchema>) {
+/**
+ * `opts.tx`: ejecuta dentro de la transacción del llamador (p. ej. la autoridad del bot).
+ * `opts.idempotencyKey`: una tarea por clave (un reintento devuelve la existente, no duplica).
+ */
+export async function createTask(ctx: Ctx, input: z.input<typeof taskSchema>, opts: { tx?: Tx | typeof db; idempotencyKey?: string | null } = {}) {
   assertCan(ctx, "task:write");
   const data = taskSchema.parse(input);
-  await assertOperational(ctx.tenantId);
+  const runner = opts.tx ?? db;
+  await assertOperational(ctx.tenantId, runner);
+  if (opts.idempotencyKey) {
+    const existing = await runner.query.tasks.findFirst({ where: and(eq(tasks.tenantId, ctx.tenantId), eq(tasks.idempotencyKey, opts.idempotencyKey)) });
+    if (existing) return existing;
+  }
   if (data.assigneeUserId) {
-    const m = await db.query.memberships.findFirst({ where: and(eq(memberships.tenantId, ctx.tenantId), eq(memberships.userId, data.assigneeUserId), eq(memberships.status, "active")) });
+    const m = await runner.query.memberships.findFirst({ where: and(eq(memberships.tenantId, ctx.tenantId), eq(memberships.userId, data.assigneeUserId), eq(memberships.status, "active")) });
     if (!m) throw badRequest("El responsable debe ser miembro activo.");
   }
-  if (data.contactId && !(await db.query.contacts.findFirst({ where: and(eq(contacts.id, data.contactId), eq(contacts.tenantId, ctx.tenantId)) }))) throw notFound();
+  if (data.contactId && !(await runner.query.contacts.findFirst({ where: and(eq(contacts.id, data.contactId), eq(contacts.tenantId, ctx.tenantId)) }))) throw notFound();
   let contactId = data.contactId ?? null;
   if (data.opportunityId) {
-    const o = await db.query.opportunities.findFirst({ where: and(eq(opportunities.id, data.opportunityId), eq(opportunities.tenantId, ctx.tenantId)) });
+    const o = await runner.query.opportunities.findFirst({ where: and(eq(opportunities.id, data.opportunityId), eq(opportunities.tenantId, ctx.tenantId)) });
     if (!o) throw notFound();
     contactId = contactId ?? o.contactId;
   }
-  const [t] = await db
+  const [t] = await runner
     .insert(tasks)
     .values({
       tenantId: ctx.tenantId,
@@ -43,8 +52,11 @@ export async function createTask(ctx: Ctx, input: z.input<typeof taskSchema>) {
       opportunityId: data.opportunityId ?? null,
       createdBy: actorUserId(ctx),
       createdByKind: ctx.actor.kind === "bot" ? "bot" : "user",
+      idempotencyKey: opts.idempotencyKey ?? null,
     })
+    .onConflictDoNothing()
     .returning();
+  if (!t && opts.idempotencyKey) return (await runner.query.tasks.findFirst({ where: and(eq(tasks.tenantId, ctx.tenantId), eq(tasks.idempotencyKey, opts.idempotencyKey)) }))!;
   return t;
 }
 

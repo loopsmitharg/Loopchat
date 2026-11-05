@@ -1,7 +1,7 @@
 import "server-only";
 import { and, asc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
-import { db } from "../db";
+import { db, type Tx } from "../db";
 import { contacts, leadFields, type LeadData } from "../db/schema";
 import { actorUserId, assertCan, type Ctx } from "../authz/context";
 import { badRequest, conflict, notFound } from "../http/errors";
@@ -131,13 +131,13 @@ export async function setContactLeadValue(ctx: Ctx, contactId: string, input: z.
  * Aplica datos recopilados por el bot: solo claves habilitadas y valores válidos. Un dato
  * ingresado por una persona no se pisa con uno del bot. Devuelve lo aplicado y lo descartado.
  */
-export async function applyCollectedLeadData(tenantId: string, contactId: string, allowedKeys: string[], collected: Record<string, unknown>) {
+export async function applyCollectedLeadData(tenantId: string, contactId: string, allowedKeys: string[], collected: Record<string, unknown>, runner: Tx | typeof db = db) {
   const applied: { key: string; value: string }[] = [];
   const rejected: { key: string; reason: string }[] = [];
   const entries = Object.entries(collected ?? {}).slice(0, 20);
   if (!entries.length) return { applied, rejected };
   const fields = await activeLeadFields(tenantId);
-  const contact = await db.query.contacts.findFirst({ where: and(eq(contacts.id, contactId), eq(contacts.tenantId, tenantId)) });
+  const contact = await runner.query.contacts.findFirst({ where: and(eq(contacts.id, contactId), eq(contacts.tenantId, tenantId)) });
   if (!contact) return { applied, rejected };
   const data = { ...((contact.leadData ?? {}) as LeadData) };
   for (const [key, raw] of entries) {
@@ -159,6 +159,6 @@ export async function applyCollectedLeadData(tenantId: string, contactId: string
     data[key] = { value: v, updatedAt: new Date().toISOString(), source: "bot" };
     applied.push({ key, value: v });
   }
-  if (applied.length) await db.update(contacts).set({ leadData: data, updatedAt: new Date() }).where(eq(contacts.id, contactId));
+  if (applied.length) await runner.update(contacts).set({ leadData: data, updatedAt: new Date() }).where(eq(contacts.id, contactId));
   return { applied, rejected };
 }

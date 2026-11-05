@@ -69,6 +69,9 @@ export function OperationSection({ bot, canEdit, onSaved }: SectionProps) {
           <Field label="Llamadas a la IA por conversación" hint="Al llegar al límite deriva a una persona, sin llamar a la IA. 0 = sin límite.">
             {(f) => <Input {...f} type="number" min={0} max={500} value={o.maxAiCallsPerConversation} disabled={!canEdit} onChange={(e) => setO((x) => ({ ...x, maxAiCallsPerConversation: Math.max(0, Math.min(500, Number(e.target.value) || 0)) }))} />}
           </Field>
+          <Field label="Llamadas a la IA por contacto (24 h)" hint="Suma todas las conversaciones del contacto. Al llegar al límite deriva a una persona. 0 = sin límite.">
+            {(f) => <Input {...f} type="number" min={0} max={5000} value={o.maxAiCallsPerContactPerDay} disabled={!canEdit} onChange={(e) => setO((x) => ({ ...x, maxAiCallsPerContactPerDay: Math.max(0, Math.min(5000, Number(e.target.value) || 0)) }))} />}
+          </Field>
         </div>
         <Field label="Si el bot falla">
           {(f) => (

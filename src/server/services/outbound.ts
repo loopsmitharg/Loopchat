@@ -29,12 +29,21 @@ export type SendInput = {
   attachment?: { productId: string };
 };
 
-/** Cancela ejecuciones de bot activas de la conversación (llamar dentro de la transacción). */
+/**
+ * Cancela ejecuciones de bot activas de la conversación y las respuestas del bot que todavía no
+ * empezaron a enviarse (llamar dentro de la transacción de la toma humana). También descarta el
+ * mensaje pendiente: lo atiende la persona.
+ */
 async function cancelActiveRuns(tx: Parameters<Parameters<typeof db.transaction>[0]>[0], tenantId: string, conversationId: string, reason: string) {
   await tx
     .update(flowRuns)
     .set({ status: "cancelled", lastError: reason, finishedAt: new Date(), updatedAt: new Date() })
     .where(and(eq(flowRuns.tenantId, tenantId), eq(flowRuns.conversationId, conversationId), inArray(flowRuns.status, ["queued", "running", "waiting"])));
+  await tx
+    .update(messages)
+    .set({ status: "cancelled", error: "Descartada: una persona tomó la conversación", updatedAt: new Date() })
+    .where(and(eq(messages.tenantId, tenantId), eq(messages.conversationId, conversationId), eq(messages.senderKind, "bot"), eq(messages.status, "pending")));
+  await tx.update(conversations).set({ pendingBotMessage: null }).where(eq(conversations.id, conversationId));
 }
 
 /**
@@ -68,6 +77,11 @@ export async function sendOutbound(ctx: Ctx, input: SendInput): Promise<{ messag
 
     if (ctx.actor.kind === "bot") {
       if (conv.attentionMode !== "bot") return { skipped: true as const, conv };
+      // la ejecución que generó la respuesta fue cancelada (toma humana, derivación, pausa)
+      if (ctx.actor.runId) {
+        const r = await tx.execute<{ status: string }>(sql`select status from flow_runs where id = ${ctx.actor.runId} for share`);
+        if (r.rows[0] && r.rows[0].status !== "running") return { skipped: true as const, conv };
+      }
       // equipos: solo responde el bot activo (respuestas tardías de un bot anterior se descartan)
       if (conv.teamId && conv.activeBotId && conv.activeBotId !== ctx.actor.botId) return { skipped: true as const, conv };
     } else if (ctx.actor.kind === "user") {
@@ -112,6 +126,9 @@ export async function sendOutbound(ctx: Ctx, input: SendInput): Promise<{ messag
 }
 
 async function deliver(tenantId: string, messageId: string, chatwootConversationId: number, text: string, idempotencyKey: string, attachment?: { productId: string }) {
+  // reclamo del envío: si una toma humana canceló la respuesta en el medio, no sale
+  const claimed = await db.update(messages).set({ status: "sending", updatedAt: new Date() }).where(and(eq(messages.id, messageId), eq(messages.status, "pending"))).returning({ id: messages.id });
+  if (!claimed.length) return { messageId, status: "cancelled", skipped: true };
   try {
     const { client } = await getTenantChatwoot(tenantId);
     let res;

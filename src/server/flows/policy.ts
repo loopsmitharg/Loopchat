@@ -49,6 +49,8 @@ export async function handoffWithPolicy(input: {
   config: BotConfig;
   sendTransfer: boolean;
   data?: Record<string, unknown>;
+  /** Clave del mensaje de transferencia (por defecto: ejecución + motivo). */
+  transferKey?: string;
 }): Promise<{ changed: boolean; assignedTo: string | null; taskId: string | null; transferSent: boolean }> {
   const { tenantId, conversationId, botId, config } = input;
   const ctx: Ctx = { tenantId, actor: { kind: "bot", botId, runId: input.runId ?? undefined } };
@@ -56,7 +58,7 @@ export async function handoffWithPolicy(input: {
   const msg = config.handoff.transferMessage.trim();
   if (input.sendTransfer && msg) {
     try {
-      const r = await sendOutbound(ctx, { conversationId, text: msg, idempotencyKey: `handoff:${input.runId ?? conversationId}:${input.code}`, origin: { botId, runId: input.runId ?? undefined } });
+      const r = await sendOutbound(ctx, { conversationId, text: msg, idempotencyKey: input.transferKey ?? `handoff:${input.runId ?? conversationId}:${input.code}`, origin: { botId, runId: input.runId ?? undefined } });
       transferSent = !r.skipped;
     } catch (e) {
       // la derivación no depende del envío del mensaje (p. ej. ventana de 24 h cerrada)
@@ -68,7 +70,7 @@ export async function handoffWithPolicy(input: {
   const res = await db.transaction(async (tx) => {
     const upd = await tx
       .update(conversations)
-      .set({ attentionMode: "requested", updatedAt: new Date(), version: sql`${conversations.version} + 1` })
+      .set({ attentionMode: "requested", pendingBotMessage: null, updatedAt: new Date(), version: sql`${conversations.version} + 1` })
       .where(and(eq(conversations.id, conversationId), eq(conversations.tenantId, tenantId), eq(conversations.attentionMode, "bot")))
       .returning();
     if (!upd.length) return { changed: false as const, conv: null };

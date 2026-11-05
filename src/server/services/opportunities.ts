@@ -113,10 +113,10 @@ export const updateOpportunitySchema = z.object({
  * Actualización con control de concurrencia optimista (version). Si otra persona cambió la
  * oportunidad, responde 409 con la versión vigente: nunca se pisa en silencio.
  */
-export async function updateOpportunity(ctx: Ctx, id: string, input: z.input<typeof updateOpportunitySchema>) {
+export async function updateOpportunity(ctx: Ctx, id: string, input: z.input<typeof updateOpportunitySchema>, txIn?: Tx) {
   assertCan(ctx, "opportunity:write");
   const data = updateOpportunitySchema.parse(input);
-  return db.transaction(async (tx) => {
+  const run = async (tx: Tx) => {
     await assertOperational(ctx.tenantId, tx);
     const opp = await tx.query.opportunities.findFirst({ where: and(eq(opportunities.id, id), eq(opportunities.tenantId, ctx.tenantId)) });
     if (!opp) throw notFound();
@@ -169,7 +169,8 @@ export async function updateOpportunity(ctx: Ctx, id: string, input: z.input<typ
     // eventos del pipeline para las automatizaciones de equipos de chatbots (en la misma transacción)
     if (patch.stageId) await enqueue("team.automation", { opportunityId: id, stageId: patch.stageId, stageKind: patch.status, pipelineId: opp.pipelineId }, { tenantId: ctx.tenantId, dedupKey: `opp-stage:${id}:${updated[0].version}`, maxAttempts: 3 }, tx);
     return updated[0];
-  });
+  };
+  return txIn ? run(txIn) : db.transaction(run);
 }
 
 export async function getBoard(ctx: Ctx, pipelineId?: string, q?: string) {

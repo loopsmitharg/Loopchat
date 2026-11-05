@@ -57,6 +57,12 @@ const norm = (s: string) =>
     .replace(/[̀-ͯ]/g, "")
     .trim();
 
+/** Misma comparación que la condición `contains_any` (sin mayúsculas ni acentos). */
+export function matchesAnyKeyword(text: string, keywords: string[]) {
+  const s = norm(text);
+  return keywords.map(norm).filter(Boolean).some((k) => s.includes(k));
+}
+
 export function evaluateCondition(d: NodeData["condition"], ctx: FlowContext): boolean {
   const subject = d.source === "message" ? ctx.lastMessage : d.source === "intent" ? (ctx.intent ?? "") : (ctx.vars[d.variable ?? ""] ?? "");
   const s = norm(subject);

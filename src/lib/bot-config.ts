@@ -163,8 +163,10 @@ export const operationConfigSchema = z.object({
   retries: z.number().int().min(1).max(3).default(3),
   onFailure: z.enum(["handoff", "message_and_handoff"]).default("handoff"),
   failureMessage: z.string().trim().max(300).default(""),
-  /** Llamadas a la IA por conversación antes de derivar (0 = sin límite). */
-  maxAiCallsPerConversation: z.number().int().min(0).max(500).default(0),
+  /** Llamadas a la IA por conversación antes de derivar (0 = sin límite). Bots nuevos: 40 (los existentes conservan su valor). */
+  maxAiCallsPerConversation: z.number().int().min(0).max(500).default(40),
+  /** Llamadas a la IA por contacto en 24 h, sumando todas sus conversaciones (0 = sin límite): frena consumos abusivos. */
+  maxAiCallsPerContactPerDay: z.number().int().min(0).max(5000).default(60),
 });
 
 export const botConfigSchema = z.object({

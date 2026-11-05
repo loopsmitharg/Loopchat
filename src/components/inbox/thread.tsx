@@ -8,6 +8,7 @@ function StatusIcon({ m }: { m: ThreadMessage }) {
   if (m.direction === "in") return null;
   switch (m.status) {
     case "pending":
+    case "sending":
     case "progress":
       return <Clock className="size-3.5" aria-label="Enviando" />;
     case "sent":

@@ -366,6 +366,8 @@ export type ConversationBotState = {
   transfer?: { fromBotId: string | null; toBotId: string; at: string; note: string };
 };
 
+export type PendingBotMessage = { chatwootMessageId: number; text: string; hasAttachments: boolean; at: string };
+
 export const CONVERSATION_STATUSES = ["open", "pending", "resolved", "snoozed"] as const;
 export const ATTENTION_MODES = ["bot", "requested", "human", "paused"] as const;
 export type AttentionMode = (typeof ATTENTION_MODES)[number];
@@ -400,6 +402,8 @@ export const conversations = pgTable(
     teamId: uuid("team_id"),
     teamVersionId: uuid("team_version_id"),
     activeBotId: uuid("active_bot_id"),
+    // último mensaje del cliente que llegó mientras el bot procesaba otro: se procesa al terminar (no se pierde)
+    pendingBotMessage: jsonb("pending_bot_message").$type<PendingBotMessage | null>(),
     version: integer("version").notNull().default(1),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -425,7 +429,7 @@ export const messages = pgTable(
     direction: text("direction", { enum: ["in", "out"] }).notNull(),
     senderKind: text("sender_kind", { enum: ["contact", "agent", "bot", "system"] }).notNull(),
     authorUserId: text("author_user_id").references(() => user.id, { onDelete: "set null" }),
-    status: text("status", { enum: ["pending", "sent", "delivered", "read", "failed"] }).notNull(),
+    status: text("status", { enum: ["pending", "sending", "sent", "delivered", "read", "failed", "cancelled"] }).notNull(),
     error: text("error"),
     idempotencyKey: text("idempotency_key"),
     // Texto solo mientras el envío está pendiente/fallido (para reintentar); se borra al confirmarse.
@@ -589,10 +593,12 @@ export const tasks = pgTable(
     createdByKind: text("created_by_kind", { enum: ["user", "bot"] }).notNull().default("user"),
     createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
     completedAt: ts("completed_at"),
+    // acciones de bots: clave estable por ejecución/paso para que un reintento no duplique la tarea
+    idempotencyKey: text("idempotency_key"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [index("tasks_tenant_status_idx").on(t.tenantId, t.status, t.dueAt)],
+  (t) => [index("tasks_tenant_status_idx").on(t.tenantId, t.status, t.dueAt), uniqueIndex("tasks_idem_uq").on(t.tenantId, t.idempotencyKey)],
 );
 
 /* ------------------------------------------------------------------ */
@@ -693,9 +699,13 @@ export const flowRuns = pgTable(
     startedAt: ts("started_at").notNull().defaultNow(),
     updatedAt: updatedAt(),
     finishedAt: ts("finished_at"),
+    // lease del proceso que la ejecuta: otro worker solo puede retomarla si venció (sin doble ejecución)
+    leaseOwner: text("lease_owner"),
+    leaseUntil: ts("lease_until"),
   },
   (t) => [
     uniqueIndex("flow_runs_trigger_uq").on(t.tenantId, t.triggerKey),
+    uniqueIndex("flow_runs_active_conv_uq").on(t.conversationId).where(sql`status in ('queued', 'running')`),
     index("flow_runs_conv_idx").on(t.conversationId, t.status),
     index("flow_runs_resume_idx").on(t.status, t.resumeAt),
   ],
@@ -1025,12 +1035,26 @@ export const jobs = pgTable(
     attempts: integer("attempts").notNull().default(0),
     maxAttempts: integer("max_attempts").notNull().default(5),
     lockedUntil: ts("locked_until"),
+    // worker que tiene el lease (fencing): solo él puede completar/fallar el trabajo
+    lockedBy: text("locked_by"),
     lastError: text("last_error"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [index("jobs_pick_idx").on(t.status, t.runAt)],
+  (t) => [index("jobs_pick_idx").on(t.status, t.runAt), index("jobs_tenant_running_idx").on(t.tenantId, t.status)],
 );
+
+/** Resultado de una generación de IA ya pagada: un reintento del mismo paso lo reutiliza en lugar de volver a llamar. */
+export const aiTurnResults = pgTable("ai_turn_results", {
+  key: text("key").primaryKey(),
+  tenantId: uuid("tenant_id")
+    .notNull()
+    .references(() => tenants.id, { onDelete: "cascade" }),
+  text: text("text").notNull(),
+  inputTokens: integer("input_tokens"),
+  outputTokens: integer("output_tokens"),
+  createdAt: createdAt(),
+});
 
 export const rateLimits = pgTable(
   "rate_limits",

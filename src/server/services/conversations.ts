@@ -146,7 +146,8 @@ export async function getConversationDetail(ctx: Ctx, id: string, opts: { before
   });
   // mensajes locales que todavía no llegaron a Chatwoot (pendientes o fallidos)
   for (const l of locals) {
-    if (l.m.chatwootMessageId) continue;
+    // respuestas de bot invalidadas por una toma humana nunca salieron: no se muestran
+    if (l.m.chatwootMessageId || l.m.status === "cancelled") continue;
     thread.push({
       key: `lc-${l.m.id}`,
       localId: l.m.id,
