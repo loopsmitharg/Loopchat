@@ -1,6 +1,6 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { and, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 import type { FlowGraph, FlowNode } from "@/lib/flow/types";
 import { db } from "../db";
 import { aiTurnResults, botProducts, botTeams, botVersions, bots, contacts, conversations, flowRunSteps, flowRuns, tenants, type ConversationBotState } from "../db/schema";
@@ -13,7 +13,7 @@ import { log } from "../log";
 import { loadProviderForTenant } from "../services/ai-connections";
 import { retryOutbound, sendOutbound } from "../services/outbound";
 import { completeAiCall, getPlanState, isOperational, reserveAiCall } from "../services/usage";
-import { applyOpportunity, BotAuthorityLost, runAiTurn, type BotAuthority, type TurnLog } from "./ai-turn";
+import { AiOutputInvalid, applyOpportunity, BotAuthorityLost, runAiTurn, type BotAuthority, type TurnLog } from "./ai-turn";
 import { drainPendingMessage } from "./trigger";
 import { runFlow, type AiNodeResult, type FlowContext, type FlowEffects, type RunOutcome } from "./interpreter";
 import { checkInsult, handoffWithPolicy, OUT_OF_HOURS_NOTE, type HandoffCode } from "./policy";
@@ -155,6 +155,9 @@ async function runAiNode(ctx: Ctx, run: RunRow, settings: BotSettings, node: Flo
     team: conv?.teamVersionId ? await teamContext(run.tenantId, conv.teamVersionId, run.botId) : null,
     actionKey: key,
     authority,
+    async onInvalidOutput() {
+      await db.delete(aiTurnResults).where(and(eq(aiTurnResults.key, key), eq(aiTurnResults.tenantId, run.tenantId)));
+    },
     async callModel(req) {
       // reintento de un paso cuya generación ya se pagó (p. ej. falló el envío): se reutiliza, sin volver a llamar
       const cached = await db.query.aiTurnResults.findFirst({ where: and(eq(aiTurnResults.key, key), eq(aiTurnResults.tenantId, run.tenantId)) });
@@ -463,7 +466,7 @@ async function executeRunJobInner(job: RunJob, attempt: number, maxAttempts: num
       await finish("cancelled", err.message);
       return { outcome: "cancelled" };
     }
-    const retryable = e instanceof FlowStepError ? e.retryable : true;
+    const retryable = e instanceof FlowStepError || e instanceof AiOutputInvalid ? e.retryable : true;
     if (retryable && attempt < Math.min(maxAttempts, settings.config.operation.retries)) {
       // libera el lease para que el reintento (otro proceso o este) pueda retomarla
       await db.update(flowRuns).set({ status: "running", lastError: err.message.slice(0, 300), leaseUntil: new Date(), updatedAt: new Date() }).where(and(eq(flowRuns.id, run.id), eq(flowRuns.leaseOwner, lease.owner)));

@@ -10,7 +10,8 @@ export type ChatRequest = {
   timeoutMs?: number;
 };
 
-export type ChatResult = { text: string; inputTokens?: number; outputTokens?: number; model: string };
+/** `truncated`: el proveedor cortó la salida por límite de tokens (no se debe enviar como respuesta). */
+export type ChatResult = { text: string; inputTokens?: number; outputTokens?: number; model: string; truncated?: boolean };
 
 export class AiProviderError extends Error {
   constructor(public readonly kind: "auth" | "rate_limit" | "timeout" | "network" | "bad_request" | "server" | "invalid_response", message: string, public readonly status?: number) {

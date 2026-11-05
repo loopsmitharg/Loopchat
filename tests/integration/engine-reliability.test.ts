@@ -1,7 +1,7 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/server/db";
-import { conversations, flowRuns, jobs, opportunities, stages, tasks, usageEvents } from "@/server/db/schema";
+import { conversations, flowRuns, opportunities, stages, tasks, usageEvents } from "@/server/db/schema";
 import { createAiConnection } from "@/server/services/ai-connections";
 import { createBot, publishBot, setBotStatus } from "@/server/services/bots";
 import { sendOutbound } from "@/server/services/outbound";
@@ -258,5 +258,65 @@ describe("idempotencia y autoridad del bot (regresión P1-02 / P1-03 / P2-04)", 
     expect((await localConversation(A.id, r.conversationId))!.attentionMode).toBe("requested");
     void sql;
     void conversations;
+  });
+});
+
+describe("salida de la IA (regresión P1-01 / P1-07 / P1-08)", () => {
+  it("JSON roto: nunca llega al cliente; se reintenta y responde bien", async () => {
+    const { ctxA } = await twoTenants();
+    const { accountId } = await provisionWithChannel(ctxA);
+    await setup(ctxA);
+    ai.push('{"reply": "Hola, el precio del taladro es de $85.0', decision({ reply: "Hola, ¿en qué te ayudo?" }));
+    const r = await simIncoming(accountId, { phone: phone(), content: "precio?" });
+    await settle(4000);
+    await sleep(5500);
+    await settle(4000);
+    const out = await outgoing(accountId, r.conversationId);
+    expect(out.some((o) => o.trim().startsWith("{"))).toBe(false);
+    expect(out).toEqual(["Hola, ¿en qué te ayudo?"]);
+  });
+
+  it("respuesta truncada por límite de tokens: no se envía y deriva a una persona", async () => {
+    const { A, ctxA } = await twoTenants();
+    const { accountId } = await provisionWithChannel(ctxA);
+    await setup(ctxA, { config: { operation: { onFailure: "message_and_handoff", failureMessage: "Te atiende una persona del equipo." } } });
+    ai.push({ content: decision({ reply: "El precio es" }), finishReason: "length" });
+    const r = await simIncoming(accountId, { phone: phone(), content: "precio?" });
+    await settle();
+    expect(await outgoing(accountId, r.conversationId)).toEqual(["Te atiende una persona del equipo."]);
+    expect((await localConversation(A.id, r.conversationId))!.attentionMode).toBe("requested");
+  });
+
+  it("descuento inventado: se retiene y deriva; un precio del catálogo sí sale", async () => {
+    const { A, ctxA } = await twoTenants();
+    const { accountId } = await provisionWithChannel(ctxA);
+    await setup(ctxA);
+    ai.push(decision({ reply: "¡Te hago un 30% de descuento si comprás hoy!" }));
+    const r = await simIncoming(accountId, { phone: phone(), content: "¿me hacés un descuento?" });
+    await settle();
+    const out = await outgoing(accountId, r.conversationId);
+    expect(out.join(" ")).not.toContain("30%");
+    expect((await localConversation(A.id, r.conversationId))!.attentionMode).toBe("requested");
+    const run = await db.query.flowRuns.findFirst({ where: eq(flowRuns.conversationId, (await localConversation(A.id, r.conversationId))!.id) });
+    expect(run?.metrics).toMatchObject({ handoffCode: "commercial_guard" });
+  });
+
+  it("pregunta de seguimiento ('¿y cuánto sale?') conserva el producto conversado en el contexto", async () => {
+    const { ctxA } = await twoTenants();
+    const { accountId } = await provisionWithChannel(ctxA);
+    const bot = await setup(ctxA, { tools: ["classify", "handoff", "use_catalog"] });
+    const { createProduct, setBotProducts } = await import("@/server/services/products");
+    const { publishBot } = await import("@/server/services/bots");
+    const p = await createProduct(ctxA, { title: "Taladro percutor 800W", description: "Para hormigón", price: 85000, stock: 5 });
+    await setBotProducts(ctxA, bot.id, { add: [p.id] });
+    await publishBot(ctxA, bot.id);
+    const ph = phone();
+    ai.push(decision({ reply: "Sí, lo tenemos." }), decision({ reply: "Cuesta ARS 85.000." }));
+    await simIncoming(accountId, { phone: ph, content: "Me interesa el taladro percutor" });
+    await settle();
+    const r = await simIncoming(accountId, { phone: ph, content: "¿y cuánto sale?" });
+    await settle();
+    expect(ai.calls.at(-1)!.system).toContain("85.000");
+    expect((await outgoing(accountId, r.conversationId)).at(-1)).toBe("Cuesta ARS 85.000.");
   });
 });

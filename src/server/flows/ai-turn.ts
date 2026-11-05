@@ -8,7 +8,8 @@ import { INSTRUCTIONS_VERSION, type PolicyInput } from "@/lib/instructions/build
 import { liveMandatoryRules, tenantHoursSummary } from "../services/ai-profile";
 import type { Ctx } from "../authz/context";
 import { searchKnowledge } from "../services/knowledge";
-import { searchCatalog } from "../services/products";
+import { getCatalogItems, searchCatalog, type CatalogItem } from "../services/products";
+import { checkCommercialClaims } from "@/lib/commercial-guard";
 import { activeLeadFields, applyCollectedLeadData } from "../services/lead-fields";
 import { createOpportunity, updateOpportunity } from "../services/opportunities";
 import { createTask } from "../services/tasks";
@@ -42,6 +43,13 @@ export type ModelCall = (req: { system: string; messages: ReturnType<typeof hist
 
 /** Quién tiene la autoridad para aplicar efectos comerciales en nombre del bot. */
 export type BotAuthority = { runId: string; conversationId: string; botId: string; leaseOwner: string | null };
+
+/** La IA devolvió algo que no se puede enviar (JSON roto, truncado, estructura interna). */
+export class AiOutputInvalid extends Error {
+  constructor(message: string, public readonly retryable: boolean) {
+    super(message);
+  }
+}
 
 export class BotAuthorityLost extends Error {
   constructor(reason = "El bot ya no tiene el control de la conversación (intervención humana, pausa o derivación).") {
@@ -102,7 +110,34 @@ export type TurnEnv = {
   actionKey?: string;
   /** Autoridad del bot para efectos reales (runtime). null/ausente en simulación. */
   authority?: BotAuthority | null;
+  /** Descarta la generación guardada de este paso (salida inválida: el reintento debe volver a generar). */
+  onInvalidOutput?: () => Promise<void>;
 };
+
+/**
+ * Productos para el turno: los que coinciden con el mensaje actual y, para preguntas de seguimiento
+ * ("¿y cuánto sale?"), los de los mensajes recientes del cliente y los ya consultados en la conversación.
+ * Nunca el catálogo completo.
+ */
+async function catalogForTurn(env: TurnEnv, scopeIds: string[] | null): Promise<{ matches: CatalogItem[]; total: number; overview: CatalogItem[] }> {
+  const res = await searchCatalog(env.tenantId, { productIds: scopeIds }, env.message, 5);
+  if (res.matches.length >= 5 || !res.total) return res;
+  const seen = new Set(res.matches.map((m) => m.id));
+  const extra: CatalogItem[] = [];
+  const recentIncoming = env.history.filter((h) => h.direction === "in").slice(-4).map((h) => h.content).join(" ");
+  const add = (m: CatalogItem) => {
+    if (seen.has(m.id)) return;
+    seen.add(m.id);
+    extra.push(m);
+  };
+  if (recentIncoming.trim()) (await searchCatalog(env.tenantId, { productIds: scopeIds }, recentIncoming, 3)).matches.forEach(add);
+  if (env.conversationId) {
+    const conv = await db.query.conversations.findFirst({ columns: { botState: true }, where: and(eq(conversations.id, env.conversationId), eq(conversations.tenantId, env.tenantId)) });
+    const ids = (((conv?.botState ?? {}) as ConversationBotState).productIds ?? []).slice(0, 3).filter((id) => !seen.has(id) && (!scopeIds || scopeIds.includes(id)));
+    (await getCatalogItems(env.tenantId, ids)).forEach(add);
+  }
+  return { ...res, matches: [...res.matches, ...extra].slice(0, 5) };
+}
 
 export type SimState = { unresolvedStreak: number; opps?: Record<string, { stageId: string; title: string; stageName: string; pipelineName: string }> };
 
@@ -134,7 +169,7 @@ export async function runAiTurn(env: TurnEnv): Promise<{ result: AiNodeResult; l
   let catalog: { products: PromptProduct[]; overview: string[]; total: number; canSendPhotos: boolean } | null = null;
   let refMap = new Map<string, { id: string; title: string; hasPhoto: boolean }>();
   if (tools.includes("use_catalog")) {
-    const res = await searchCatalog(tenantId, { productIds: cfg.catalog.mode === "all" ? null : settings.productIds }, env.message, 5);
+    const res = await catalogForTurn(env, cfg.catalog.mode === "all" ? null : settings.productIds);
     const prods = res.matches.map((m, i) => ({ ref: `P${i + 1}`, title: m.title, description: m.description, price: m.price, currency: m.currency, stock: m.stock, hasPhoto: m.hasPhoto }));
     refMap = new Map(res.matches.map((m, i) => [`P${i + 1}`, { id: m.id, title: m.title, hasPhoto: m.hasPhoto }]));
     catalog = { products: prods, overview: res.overview.map((o) => o.title), total: res.total, canSendPhotos: cfg.catalog.sendPhotos };
@@ -192,7 +227,37 @@ export async function runAiTurn(env: TurnEnv): Promise<{ result: AiNodeResult; l
   log.inputTokens = out.inputTokens ?? 0;
   log.outputTokens = out.outputTokens ?? 0;
 
-  const decision = parseAiDecision(out.text, tools, stageNames, { productRefs: [...refMap.keys()], fieldKeys: fields.map((f) => f.key), allStageNames: allStages.map((s) => s.name), quoteEnabled: Boolean(quoteStage) });
+  const decision0 = parseAiDecision(out.text, tools, stageNames, { productRefs: [...refMap.keys()], fieldKeys: fields.map((f) => f.key), allStageNames: allStages.map((s) => s.name), quoteEnabled: Boolean(quoteStage) });
+  // salida inválida o truncada: nunca se envía; se reintenta (si tiene sentido) o se deriva
+  if (out.truncated || decision0.malformed) {
+    const reason = out.truncated ? "La IA cortó la respuesta por el límite de tokens" : "La IA devolvió una respuesta con formato inválido";
+    log.blocked.push(reason);
+    if (env.dryRun) return { result: { handoff: { reason, code: "error" } }, log };
+    await env.onInvalidOutput?.();
+    throw new AiOutputInvalid(reason, !out.truncated);
+  }
+  const decision = decision0;
+  // validación comercial del lado del servidor: importes, descuentos, stock, confirmaciones de venta y plazos
+  if (decision.reply) {
+    const authorizedText = [
+      settings.instructions,
+      env.node.data.instructions ?? "",
+      ...knowledge.map((k) => k.content),
+      ...(catalog?.products.map((p) => p.description) ?? []),
+      settings.company ? JSON.stringify(settings.company.profile) : "",
+      ...(settings.company?.rules.map((r) => r.text) ?? []),
+      ...mandatoryRules.map((r) => r.text),
+    ].join("\n");
+    const check = checkCommercialClaims(decision.reply, { prices: (catalog?.products ?? []).map((p) => p.price).filter((p): p is number => p !== null), stocks: (catalog?.products ?? []).map((p) => p.stock), authorizedText });
+    if (!check.ok) {
+      const detail = check.violations.map((v) => v.text).slice(0, 3).join("; ");
+      log.blocked.push(`respuesta retenida por datos comerciales no verificados: ${detail}`);
+      log.actions.push({ kind: "blocked", text: `Respuesta no enviada: ${detail}` });
+      decision.reply = cfg.handoff.transferMessage.trim() ? null : "Dejame confirmar ese dato con una persona del equipo y te respondemos enseguida.";
+      decision.handoff = { reason: `Respuesta con datos comerciales no verificados (${detail})`.slice(0, 200) };
+      decision.commercialGuard = true;
+    }
+  }
   log.blocked.push(...decision.blocked);
   for (const b of decision.blocked) log.actions.push({ kind: "blocked", text: `Acción bloqueada: ${b}` });
   if (decision.intent) log.tools.push("classify");
@@ -281,7 +346,7 @@ export async function runAiTurn(env: TurnEnv): Promise<{ result: AiNodeResult; l
   }
 
   // productos consultados → memoria comercial; racha de consultas sin resolver → derivación
-  let handoff: AiNodeResult["handoff"] = decision.handoff ? { ...decision.handoff, code: "ai" } : toolFailure;
+  let handoff: AiNodeResult["handoff"] = decision.handoff ? { ...decision.handoff, code: decision.commercialGuard ? "commercial_guard" : "ai" } : toolFailure;
   // oportunidad de alto valor: derivación determinística (no depende de que la IA lo decida)
   const amount = decision.opportunity?.amount ?? null;
   if (!handoff && cfg.behavior.highValueAmount !== null && amount !== null && amount >= cfg.behavior.highValueAmount) {

@@ -146,7 +146,17 @@ export type AiDecision = {
   resolved: boolean | null;
   /** Acciones que el modelo intentó pero no están permitidas (se registran, no se ejecutan). */
   blocked: string[];
+  /** La salida no respetó el formato (JSON roto, truncado o estructura interna): no se envía nada. */
+  malformed?: boolean;
+  /** La respuesta original se retuvo por datos comerciales no verificados. */
+  commercialGuard?: boolean;
 };
+
+/** Texto con forma de estructura interna (JSON, claves del contrato) que no debe llegar al cliente. */
+export function looksStructured(text: string) {
+  const t = text.trim();
+  return /^\{/.test(t) || /^\[\s*[{"\]]/.test(t) || /\}\s*$/.test(t) || /"(reply|intent|handoff|opportunity|stage|task)"\s*:/.test(t);
+}
 
 function extractJson(text: string): Record<string, unknown> | null {
   const t = text.trim();
@@ -176,11 +186,16 @@ export function parseAiDecision(raw: string, tools: AiTool[], stageNames: string
   const blocked: string[] = [];
   const j = extractJson(raw);
   if (!j) {
-    // sin JSON: se usa el texto como respuesta si es razonable
-    const plain = raw.trim().slice(0, 1500);
-    return { reply: plain || null, intent: null, handoff: null, opportunity: null, quote: false, task: null, photo: null, collected: {}, resolved: null, blocked };
+    // sin JSON válido: solo se acepta prosa simple (algunos modelos ignoran el modo JSON). Un JSON
+    // roto/truncado o texto con estructura interna NUNCA se envía al cliente.
+    const plain = raw.trim();
+    if (!plain || looksStructured(plain) || plain.length > 1500) return { reply: null, intent: null, handoff: null, opportunity: null, quote: false, task: null, photo: null, collected: {}, resolved: null, blocked, malformed: true };
+    return { reply: plain, intent: null, handoff: null, opportunity: null, quote: false, task: null, photo: null, collected: {}, resolved: null, blocked };
   }
-  const reply = typeof j.reply === "string" && j.reply.trim() ? j.reply.trim().slice(0, 1500) : null;
+  const replyRaw = typeof j.reply === "string" && j.reply.trim() ? j.reply.trim().slice(0, 1500) : null;
+  // una "respuesta" que en sí misma es JSON o estructura interna es una salida inválida
+  if (replyRaw && looksStructured(replyRaw)) return { reply: null, intent: null, handoff: null, opportunity: null, quote: false, task: null, photo: null, collected: {}, resolved: null, blocked, malformed: true };
+  const reply = replyRaw;
   const intentRaw = typeof j.intent === "string" ? j.intent.toLowerCase().trim() : null;
   const intent = allowed.has("classify") && intentRaw && INTENTS.has(intentRaw) ? intentRaw : null;
   if (!allowed.has("classify") && present(j.intent)) blocked.push("classify: herramienta no habilitada");

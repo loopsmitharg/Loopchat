@@ -12,7 +12,7 @@ import { isAssignableMember } from "./settings";
 export const OUT_OF_HOURS_NOTE = "La empresa está fuera de su horario de atención: si el cliente necesita algo que requiere a una persona, aclarale que lo atienden en el próximo horario hábil.";
 
 /** Códigos de motivo de derivación registrados en actividad, ejecuciones y métricas. */
-export type HandoffCode = "insult_detection" | "keyword" | "ai" | "max_attempts" | "out_of_hours" | "flow" | "error" | "quota" | "no_ai" | "team_route" | "high_value" | "tool_error" | "usage_limit";
+export type HandoffCode = "insult_detection" | "keyword" | "ai" | "max_attempts" | "out_of_hours" | "flow" | "error" | "quota" | "no_ai" | "team_route" | "high_value" | "tool_error" | "usage_limit" | "commercial_guard";
 
 export const HANDOFF_LABELS: Record<HandoffCode, string> = {
   insult_detection: "Insulto o agresión detectada (sin IA)",
@@ -28,6 +28,7 @@ export const HANDOFF_LABELS: Record<HandoffCode, string> = {
   high_value: "Oportunidad de alto valor",
   tool_error: "Error al ejecutar una acción",
   usage_limit: "Límite de uso de IA de la conversación",
+  commercial_guard: "Respuesta con datos comerciales no verificados",
 };
 
 /**

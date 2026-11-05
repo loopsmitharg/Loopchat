@@ -22,7 +22,7 @@ beforeEach(async () => {
 
 async function setup(ctx: Ctx, config?: Parameters<typeof updateBotSettings>[2]["config"]) {
   const conn = await createAiConnection(ctx, { provider: "openai_compatible", label: "Principal", apiKey: "sk-tenant-key-AAAA", baseUrl: "http://localhost:3012/v1", defaultModel: "gpt-4o-mini" });
-  const bot = await createBot(ctx, { name: "Asistente", mode: "instructions", aiConnectionId: conn.id, instructions: "Vendemos herramientas.", allowedTools: ["classify", "use_knowledge", "handoff", "create_opportunity", "update_stage", "create_task"], handoffKeywords: ["asesor"] });
+  const bot = await createBot(ctx, { name: "Asistente", mode: "instructions", aiConnectionId: conn.id, instructions: "Vendemos herramientas. Taladro percutor: $85.000 (precio de lista cargado por la empresa).", allowedTools: ["classify", "use_knowledge", "handoff", "create_opportunity", "update_stage", "create_task"], handoffKeywords: ["asesor"] });
   if (config) await updateBotSettings(ctx, bot.id, { config });
   await publishBot(ctx, bot.id);
   await setBotStatus(ctx, bot.id, "active");
@@ -93,7 +93,7 @@ describe("derivación automática por insultos (sin IA)", () => {
     await restoreVersion(ctxA, bot.id, v1.id);
     const after = await getBot(ctxA, bot.id);
     expect(after.bot.config.handoff.insultDetection).toBe(true);
-    expect(after.bot.instructions).toBe("Vendemos herramientas.");
+    expect(after.bot.instructions).toBe("Vendemos herramientas. Taladro percutor: $85.000 (precio de lista cargado por la empresa).");
     expect(after.unpublishedChanges).toBe(false);
   });
 });

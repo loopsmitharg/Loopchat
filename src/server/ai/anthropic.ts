@@ -2,7 +2,7 @@ import "server-only";
 import { postJson } from "./http";
 import { AiProviderError, type AiProvider, type ChatRequest, type ChatResult } from "./types";
 
-type AnthropicResponse = {
+type AnthropicResponse = { stop_reason?: string;
   content?: { type: string; text?: string }[];
   usage?: { input_tokens?: number; output_tokens?: number };
   model?: string;
@@ -23,7 +23,7 @@ export class AnthropicProvider implements AiProvider {
     )) as AnthropicResponse;
     const text = json.content?.filter((c) => c.type === "text").map((c) => c.text ?? "").join("");
     if (!text) throw new AiProviderError("invalid_response", "El proveedor no devolvió texto.");
-    return { text, inputTokens: json.usage?.input_tokens, outputTokens: json.usage?.output_tokens, model: json.model ?? req.model };
+    return { text, inputTokens: json.usage?.input_tokens, outputTokens: json.usage?.output_tokens, model: json.model ?? req.model, truncated: json.stop_reason === "max_tokens" };
   }
 
   async verify(model: string) {

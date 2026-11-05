@@ -3,7 +3,7 @@ import { postJson } from "./http";
 import { AiProviderError, type AiProvider, type ChatRequest, type ChatResult } from "./types";
 
 type GeminiResponse = {
-  candidates?: { content?: { parts?: { text?: string }[] } }[];
+  candidates?: { content?: { parts?: { text?: string }[] }; finishReason?: string }[];
   usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
   modelVersion?: string;
 };
@@ -28,7 +28,7 @@ export class GeminiProvider implements AiProvider {
     )) as GeminiResponse;
     const text = json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("");
     if (!text) throw new AiProviderError("invalid_response", "El proveedor no devolvió texto.");
-    return { text, inputTokens: json.usageMetadata?.promptTokenCount, outputTokens: json.usageMetadata?.candidatesTokenCount, model: json.modelVersion ?? req.model };
+    return { text, inputTokens: json.usageMetadata?.promptTokenCount, outputTokens: json.usageMetadata?.candidatesTokenCount, model: json.modelVersion ?? req.model, truncated: json.candidates?.[0]?.finishReason === "MAX_TOKENS" };
   }
 
   async verify(model: string) {

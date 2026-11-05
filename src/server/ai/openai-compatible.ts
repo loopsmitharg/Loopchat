@@ -70,7 +70,7 @@ export class OpenAiCompatibleProvider implements AiProvider {
     if (typeof text !== "string" || (text === "" && choice?.finish_reason === "length")) {
       throw new AiProviderError("invalid_response", choice?.finish_reason === "length" ? "El modelo agotó el límite de tokens sin responder." : "El proveedor no devolvió texto.");
     }
-    return { text, inputTokens: json.usage?.prompt_tokens, outputTokens: json.usage?.completion_tokens, model: json.model ?? req.model };
+    return { text, inputTokens: json.usage?.prompt_tokens, outputTokens: json.usage?.completion_tokens, model: json.model ?? req.model, truncated: choice?.finish_reason === "length" };
   }
 
   /** Verifica clave + modelo: basta con que el proveedor acepte la solicitud. */

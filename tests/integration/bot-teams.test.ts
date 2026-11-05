@@ -40,12 +40,12 @@ async function setupTeam(ctx: Ctx, opts: SetupOpts = {}) {
   const cotizado = st.find((s) => s.name === "Cotizado")!;
   const supportPipeline = opts.supportPipeline ? await createPipeline(ctx, { name: "Soporte" }) : null;
   const supportStages = supportPipeline ? await db.select().from(stages).where(eq(stages.pipelineId, supportPipeline.id)) : [];
-  const rec = await createBot(ctx, { name: "Recepción", role: "receptionist", aiConnectionId: conn.id, instructions: `[BOT:recepcion] ${ROLE_TEMPLATES.receptionist.instructions}`, allowedTools: ["classify", "handoff", "create_opportunity"], handoffKeywords: [] });
+  const rec = await createBot(ctx, { name: "Recepción", role: "receptionist", aiConnectionId: conn.id, instructions: `[BOT:recepcion] ${ROLE_TEMPLATES.receptionist.instructions} Taladro percutor: $85.000 (precio de lista cargado por la empresa).`, allowedTools: ["classify", "handoff", "create_opportunity"], handoffKeywords: [] });
   const ven = await createBot(ctx, {
     name: "Ventas",
     role: "sales",
     aiConnectionId: conn.id,
-    instructions: "[BOT:ventas] Vendemos herramientas.",
+    instructions: "[BOT:ventas] Vendemos herramientas. Taladro percutor: $85.000 (precio de lista cargado por la empresa).",
     allowedTools: ["classify", "handoff", "create_opportunity", "update_stage", "use_catalog"],
     handoffKeywords: [],
     config: { tools: { allowedStageIds: [cotizado.id] } },
@@ -54,7 +54,7 @@ async function setupTeam(ctx: Ctx, opts: SetupOpts = {}) {
     name: "Soporte",
     role: "support",
     aiConnectionId: conn.id,
-    instructions: "[BOT:soporte] Ayudamos con fallas.",
+    instructions: "[BOT:soporte] Ayudamos con fallas. Taladro percutor: $85.000 (precio de lista cargado por la empresa).",
     allowedTools: ["classify", "handoff", "use_knowledge"],
     handoffKeywords: [],
     config: supportPipeline ? { pipeline: { primaryPipelineId: supportPipeline.id, createOpportunity: "any_inquiry", onTransferEnsureOpportunity: true } } : undefined,
@@ -93,7 +93,7 @@ describe("equipos de chatbots: derivación interna", () => {
     const { A, ctxA } = await twoTenants();
     const { accountId } = await provisionWithChannel(ctxA);
     const conn = await createAiConnection(ctxA, { provider: "openai_compatible", label: "Principal", apiKey: "sk-tenant-key-AAAA", baseUrl: "http://localhost:3012/v1", defaultModel: "gpt-4o-mini" });
-    const bot = await createBot(ctxA, { name: "Solo", aiConnectionId: conn.id, instructions: "[BOT:solo] Hola" });
+    const bot = await createBot(ctxA, { name: "Solo", aiConnectionId: conn.id, instructions: "[BOT:solo] Hola. Taladro percutor: $85.000 (precio de lista cargado por la empresa)." });
     await publishBot(ctxA, bot.id);
     await setBotStatus(ctxA, bot.id, "active");
     const r = await simIncoming(accountId, { phone: phone(), content: "cuánto sale el taladro?" });

@@ -24,7 +24,7 @@ const phone = () => `+54911900${String(Date.now()).slice(-4)}${String(seq++).pad
 
 async function liveBot(ctx: Ctx, extra: Parameters<typeof createBot>[1] = { name: "Asistente" }) {
   const conn = await createAiConnection(ctx, { provider: "openai_compatible", label: "Principal", apiKey: "sk-tenant-key-AAAA", baseUrl: "http://localhost:3012/v1", defaultModel: "gpt-4o-mini" });
-  const bot = await createBot(ctx, { aiConnectionId: conn.id, instructions: "Vendemos herramientas.", allowedTools: ["classify", "use_knowledge", "handoff", "create_opportunity"], handoffKeywords: [], ...extra });
+  const bot = await createBot(ctx, { aiConnectionId: conn.id, instructions: "Vendemos herramientas. Taladro percutor: $85.000 (precio de lista cargado por la empresa).", allowedTools: ["classify", "use_knowledge", "handoff", "create_opportunity"], handoffKeywords: [], ...extra });
   await publishBot(ctx, bot.id);
   await setBotStatus(ctx, bot.id, "active");
   return { bot, conn };

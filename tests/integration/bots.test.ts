@@ -31,7 +31,7 @@ async function setupBot(ctx: Ctx, opts: { provider?: "openai_compatible" | "anth
     baseUrl: provider === "openai_compatible" ? "http://localhost:3012/v1" : undefined,
     defaultModel: provider === "anthropic" ? "claude-haiku-4-5" : provider === "gemini" ? "gemini-2.5-flash" : "gpt-4o-mini",
   });
-  const bot = await createBot(ctx, { name: "Asistente", mode: "instructions", aiConnectionId: conn.id, instructions: opts.instructions ?? "Vendemos herramientas.", allowedTools: ["classify", "use_knowledge", "handoff", "create_opportunity", "update_stage", "create_task"], handoffKeywords: ["asesor"] });
+  const bot = await createBot(ctx, { name: "Asistente", mode: "instructions", aiConnectionId: conn.id, instructions: opts.instructions ?? "Vendemos herramientas. Taladro percutor: $85.000 (precio de lista cargado por la empresa).", allowedTools: ["classify", "use_knowledge", "handoff", "create_opportunity", "update_stage", "create_task"], handoffKeywords: ["asesor"] });
   await publishBot(ctx, bot.id);
   await setBotStatus(ctx, bot.id, "active");
   return { conn, bot };
