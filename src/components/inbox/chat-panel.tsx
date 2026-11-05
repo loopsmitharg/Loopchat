@@ -231,6 +231,7 @@ export function ChatPanel({
         }
         canNote={canNote}
         attentionMode={conv.attentionMode}
+        templateAllowed={canReply && !agentBlocked && session.operational && !detail.window.open}
         onSent={onChanged}
         onError={(m) => toast.push("error", m)}
       />

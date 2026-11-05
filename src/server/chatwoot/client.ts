@@ -120,6 +120,10 @@ export class ChatwootAccountClient {
   getInbox(inboxId: number) {
     return this.r<{ id: number; name: string; channel_type: string; phone_number?: string; message_templates?: unknown[]; provider_config?: Record<string, unknown> }>("GET", `inboxes/${inboxId}`);
   }
+  /** POST inboxes/:id/sync_templates (routes.rb v4.19): Chatwoot vuelve a leer las plantillas de la WABA en Meta. */
+  syncTemplates(inboxId: number) {
+    return this.r<unknown>("POST", `inboxes/${inboxId}/sync_templates`);
+  }
   createWhatsappInbox(input: { name: string; phoneNumber: string; apiKey: string; phoneNumberId: string; businessAccountId: string }) {
     return this.r<{ id: number; name: string }>("POST", "inboxes", {
       name: input.name,

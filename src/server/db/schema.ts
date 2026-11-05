@@ -435,7 +435,7 @@ export const messages = pgTable(
     // Texto solo mientras el envío está pendiente/fallido (para reintentar); se borra al confirmarse.
     pendingContent: text("pending_content"),
     isTemplate: boolean("is_template").notNull().default(false),
-    origin: jsonb("origin").$type<{ botId?: string; versionId?: string; runId?: string; provider?: string; model?: string }>(),
+    origin: jsonb("origin").$type<{ botId?: string; versionId?: string; runId?: string; provider?: string; model?: string; attachment?: { productId: string }; template?: { name: string; language: string; params: string[] } }>(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

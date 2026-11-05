@@ -1,9 +1,10 @@
 "use client";
 import { useRef, useState } from "react";
-import { Lock, MessageSquareText, Send, StickyNote } from "lucide-react";
+import { FileText, Lock, MessageSquareText, Send, StickyNote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 import { api, ApiError } from "@/lib/api-client";
+import { TemplateDialog } from "./template-dialog";
 
 function newKey() {
   return typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -14,11 +15,14 @@ export function Composer({
   replyDisabledReason,
   canNote,
   attentionMode,
+  templateAllowed = false,
   onSent,
   onError,
 }: {
   conversationId: string;
   replyDisabledReason: string | null;
+  /** Ventana de 24 h cerrada pero el usuario puede responder: se ofrece enviar una plantilla aprobada. */
+  templateAllowed?: boolean;
   canNote: boolean;
   attentionMode: "bot" | "requested" | "human" | "paused";
   onSent: () => void;
@@ -27,6 +31,7 @@ export function Composer({
   const [mode, setMode] = useState<"message" | "note">(replyDisabledReason && canNote ? "note" : "message");
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [templateOpen, setTemplateOpen] = useState(false);
   const keyRef = useRef<string>(newKey());
   const disabledReason =
     mode === "message" ? replyDisabledReason : !canNote ? "Tu rol no permite agregar notas." : null;
@@ -82,9 +87,14 @@ export function Composer({
         {mode === "note" ? <span className="ml-auto hidden text-right text-[11.5px] text-warning sm:inline">Solo la ve tu equipo. Nunca se envía al cliente.</span> : null}
       </div>
       {disabledReason ? (
-        <p className="flex items-start gap-2 rounded-md border border-border bg-surface-muted px-3 py-2 text-[12.5px] text-fg-secondary" role="status">
-          <Lock className="mt-0.5 size-3.5 shrink-0" aria-hidden /> {disabledReason}
-        </p>
+        <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-surface-muted px-3 py-2 text-[12.5px] text-fg-secondary" role="status">
+          <Lock className="size-3.5 shrink-0" aria-hidden /> <span className="min-w-0 flex-1">{disabledReason}</span>
+          {mode === "message" && templateAllowed ? (
+            <Button size="sm" variant="primary" onClick={() => setTemplateOpen(true)}>
+              <FileText className="size-3.5" aria-hidden /> Enviar plantilla
+            </Button>
+          ) : null}
+        </div>
       ) : (
         <form
           className="flex items-end gap-2"
@@ -117,6 +127,7 @@ export function Composer({
           </Button>
         </form>
       )}
+      {templateAllowed ? <TemplateDialog conversationId={conversationId} open={templateOpen} onClose={() => setTemplateOpen(false)} onSent={onSent} onError={onError} /> : null}
     </div>
   );
 }

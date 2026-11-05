@@ -25,6 +25,15 @@ const users = new Map<number, { id: number; email: string; token: string }>();
 const deliveries: { url: string; event: string; status: number | string }[] = [];
 let failNextSend = false;
 
+/** Plantillas de la WABA tal como las guarda Chatwoot (respuesta de Meta /message_templates). Fixture del simulador. */
+const SIM_TEMPLATES = [
+  { name: "seguimiento_consulta", language: "es_AR", status: "APPROVED", category: "MARKETING", components: [{ type: "BODY", text: "Hola {{1}}, te escribimos por tu consulta sobre {{2}}. ¿Seguimos por acá?" }] },
+  { name: "recordatorio_pago", language: "es_AR", status: "PENDING", category: "UTILITY", components: [{ type: "BODY", text: "Hola {{1}}, te recordamos tu pago." }] },
+  { name: "promo_con_imagen", language: "es_AR", status: "APPROVED", category: "MARKETING", components: [{ type: "HEADER", format: "IMAGE" }, { type: "BODY", text: "Novedades para vos, {{1}}." }] },
+];
+/** Como Whatsapp::TemplateProcessorService: solo plantillas APPROVED por nombre + idioma; sin coincidencia Meta la rechaza. */
+const approvedTemplate = (tp: Record<string, unknown>) => SIM_TEMPLATES.find((t) => t.name === tp.name && t.language.toLowerCase() === String(tp.language ?? "").toLowerCase() && t.status === "APPROVED");
+
 // Persistencia opcional (demo local): `--state <archivo>` guarda cuentas/bandejas/conversaciones
 // para que reiniciar el simulador no lo deje desincronizado de la base de Loopchat. Los tests no la usan.
 const stateArg = process.argv.indexOf("--state");
@@ -258,11 +267,12 @@ const server = createServer(async (req, res) => {
         acc.inboxes.push(inbox);
         return json(res, 200, { id: inbox.id, name: inbox.name, channel_type: "Channel::Whatsapp" });
       }
+      if (/^inboxes\/\d+\/sync_templates$/.test(rest) && req.method === "POST") return json(res, 200, {});
       const im = rest.match(/^inboxes\/(\d+)$/);
       if (im) {
         const inbox = acc.inboxes.find((i) => i.id === Number(im[1]));
         if (!inbox) return json(res, 404, { error: "Resource could not be found" });
-        if (req.method === "GET") return json(res, 200, { id: inbox.id, name: inbox.name, channel_type: "Channel::Whatsapp", phone_number: inbox.phone_number, provider_config: { webhook_verify_token: inbox.provider_config.webhook_verify_token }, message_templates: [] });
+        if (req.method === "GET") return json(res, 200, { id: inbox.id, name: inbox.name, channel_type: "Channel::Whatsapp", phone_number: inbox.phone_number, provider_config: { webhook_verify_token: inbox.provider_config.webhook_verify_token }, message_templates: SIM_TEMPLATES });
         if (req.method === "PATCH") {
           const b = await body(req);
           const pc = (b.channel as { provider_config?: Record<string, unknown> })?.provider_config;
@@ -303,8 +313,12 @@ const server = createServer(async (req, res) => {
             message_type: b.template_params ? 3 : 1,
             created_at: Math.floor(Date.now() / 1000),
             private: Boolean(b.private),
-            status: outsideWindow && !b.template_params ? "failed" : "sent",
-            content_attributes: { ...((b.content_attributes as Record<string, unknown>) ?? {}), ...(outsideWindow && !b.template_params ? { external_error: "Message outside messaging window" } : {}) },
+            status: (outsideWindow && !b.template_params) || (b.template_params && !approvedTemplate(b.template_params as Record<string, unknown>)) ? "failed" : "sent",
+            content_attributes: {
+              ...((b.content_attributes as Record<string, unknown>) ?? {}),
+              ...(outsideWindow && !b.template_params ? { external_error: "Message outside messaging window" } : {}),
+              ...(b.template_params && !approvedTemplate(b.template_params as Record<string, unknown>) ? { external_error: "(#132001) Template name does not exist in the translation" } : {}),
+            },
             source_id: null,
             sender: { id: 1, name: "Loopchat (servicio)", type: "user" },
             attachments: Array.isArray(b.attachments) && b.attachments.length ? (b.attachments as { file_type: string; file_size: number }[]).map((a) => ({ id: nextId(), file_type: a.file_type, data_url: "https://example.invalid/adjunto", thumb_url: null, file_size: a.file_size })) : undefined,

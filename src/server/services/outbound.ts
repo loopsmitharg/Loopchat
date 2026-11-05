@@ -27,7 +27,16 @@ export type SendInput = {
   origin?: { botId?: string; versionId?: string; runId?: string; provider?: string; model?: string; attachment?: { productId: string } };
   /** Foto de un producto del catálogo de la empresa (se envía como adjunto con `text` como pie). */
   attachment?: { productId: string };
+  /** Plantilla aprobada de WhatsApp (permite escribir fuera de la ventana de 24 h; `text` es la vista renderizada). */
+  template?: TemplateSend;
 };
+
+export type TemplateSend = { name: string; language: string; params: string[] };
+
+/** Contrato de Chatwoot v4.19 (MessageBuilder + Whatsapp::TemplateProcessorService): parámetros de cuerpo por posición. */
+function chatwootTemplateParams(t: TemplateSend) {
+  return { name: t.name, language: t.language, processed_params: { body: Object.fromEntries(t.params.map((p, i) => [String(i + 1), p])) } };
+}
 
 /**
  * Cancela ejecuciones de bot activas de la conversación y las respuestas del bot que todavía no
@@ -69,7 +78,9 @@ export async function sendOutbound(ctx: Ctx, input: SendInput): Promise<{ messag
     if (existing) return { duplicate: true as const, message: existing, conv };
 
     const win = windowState(conv.lastIncomingAt);
-    if (!win.open) throw policyBlocked(win.reason, { reason: "meta_window_closed" });
+    // fuera de la ventana solo se permite una plantilla aprobada (iniciada por la empresa; Meta la cobra a su cuenta)
+    if (!win.open && !input.template) throw policyBlocked(win.reason, { reason: "meta_window_closed" });
+    if (input.template && ctx.actor.kind === "bot") throw forbidden("Los bots no envían plantillas.");
     if (conv.channelConnectionId) {
       const ch = await tx.query.channelConnections.findFirst({ where: eq(channelConnections.id, conv.channelConnectionId) });
       if (ch?.status === "disconnected") throw policyBlocked("El número de WhatsApp de esta conversación fue desconectado.", { reason: "channel_disconnected" });
@@ -113,7 +124,8 @@ export async function sendOutbound(ctx: Ctx, input: SendInput): Promise<{ messag
         status: "pending",
         idempotencyKey: input.idempotencyKey,
         pendingContent: text,
-        origin: input.attachment ? { ...(input.origin ?? {}), attachment: input.attachment } : input.origin,
+        origin: input.attachment ? { ...(input.origin ?? {}), attachment: input.attachment } : input.template ? { ...(input.origin ?? {}), template: input.template } : input.origin,
+        isTemplate: Boolean(input.template),
       })
       .returning();
     return { message: msg, conv };
@@ -122,10 +134,10 @@ export async function sendOutbound(ctx: Ctx, input: SendInput): Promise<{ messag
   if ("skipped" in prepared && prepared.skipped) return { messageId: "", status: "skipped", skipped: true };
   if ("duplicate" in prepared && prepared.duplicate) return { messageId: prepared.message.id, status: prepared.message.status, duplicate: true };
   const { message, conv } = prepared as { message: typeof messages.$inferSelect; conv: typeof conversations.$inferSelect };
-  return deliver(ctx.tenantId, message.id, conv.chatwootConversationId, text, input.idempotencyKey, input.attachment);
+  return deliver(ctx.tenantId, message.id, conv.chatwootConversationId, text, input.idempotencyKey, input.attachment, input.template);
 }
 
-async function deliver(tenantId: string, messageId: string, chatwootConversationId: number, text: string, idempotencyKey: string, attachment?: { productId: string }) {
+async function deliver(tenantId: string, messageId: string, chatwootConversationId: number, text: string, idempotencyKey: string, attachment?: { productId: string }, template?: TemplateSend) {
   // reclamo del envío: si una toma humana canceló la respuesta en el medio, no sale
   const claimed = await db.update(messages).set({ status: "sending", updatedAt: new Date() }).where(and(eq(messages.id, messageId), eq(messages.status, "pending"))).returning({ id: messages.id });
   if (!claimed.length) return { messageId, status: "cancelled", skipped: true };
@@ -136,7 +148,7 @@ async function deliver(tenantId: string, messageId: string, chatwootConversation
       const photo = await loadPhotoForSend(tenantId, attachment.productId);
       if (!photo) throw new ChatwootError(0, "El producto ya no tiene foto disponible.");
       res = await client.sendAttachment(chatwootConversationId, { content: text, file: { bytes: photo.bytes, mime: photo.mime, name: photo.fileName }, contentAttributes: { loopchat_message_id: idempotencyKey } });
-    } else res = await client.sendMessage(chatwootConversationId, { content: text, contentAttributes: { loopchat_message_id: idempotencyKey } });
+    } else res = await client.sendMessage(chatwootConversationId, { content: text, contentAttributes: { loopchat_message_id: idempotencyKey }, ...(template ? { templateParams: chatwootTemplateParams(template) } : {}) });
     const failed = res.status === "failed";
     await db
       .update(messages)
@@ -172,12 +184,13 @@ export async function retryOutbound(ctx: Ctx, messageId: string) {
   if (m.status !== "failed" || !m.pendingContent || m.chatwootMessageId) throw badRequest("Solo se pueden reintentar mensajes fallidos que no llegaron a Chatwoot.");
   const conv = await db.query.conversations.findFirst({ where: eq(conversations.id, m.conversationId) });
   if (!conv) throw notFound();
+  const tpl = (m.origin as { template?: TemplateSend } | null)?.template;
   const win = windowState(conv.lastIncomingAt);
-  if (!win.open) throw policyBlocked(win.reason, { reason: "meta_window_closed" });
+  if (!win.open && !tpl) throw policyBlocked(win.reason, { reason: "meta_window_closed" });
   if (ctx.actor.kind === "user" && conv.assigneeUserId && conv.assigneeUserId !== ctx.actor.userId && ctx.actor.role === "agent") throw forbidden();
   const claimed = await db.update(messages).set({ status: "pending", error: null, updatedAt: new Date() }).where(and(eq(messages.id, m.id), eq(messages.status, "failed"))).returning({ id: messages.id });
   if (claimed.length === 0) throw badRequest("El mensaje ya se está reintentando.");
-  return deliver(ctx.tenantId, m.id, conv.chatwootConversationId, m.pendingContent, m.idempotencyKey!, (m.origin as { attachment?: { productId: string } } | null)?.attachment);
+  return deliver(ctx.tenantId, m.id, conv.chatwootConversationId, m.pendingContent, m.idempotencyKey!, (m.origin as { attachment?: { productId: string } } | null)?.attachment, tpl);
 }
 
 export { cancelActiveRuns };
