@@ -7,7 +7,7 @@ Estados: `pending` · `in_progress` · `implemented` (código listo, sin prueba 
 
 | ID | Estado | Archivos principales | Commit | Pruebas / evidencia | Dependencias / bloqueos |
 |---|---|---|---|---|---|
-| P0-01 Meta/Chatwoot real | **blocked** (parcial: ver 05) | — | — | Ver `05_INTEGRATION_VALIDATION.md` | Número de prueba de Meta (WABA + token) y servidor con Chatwoot accesible por HTTPS |
+| P0-01 Meta/Chatwoot real | **blocked** — Chatwoot real ✔ (10/10, local), Meta ✘ | `tests/audit/chatwoot-real.audit.test.ts`, docs de webhook | 4ee1697 | `evidence/chatwoot-real-results.json`; pasos 1, 2 y 12 del checklist REAL | Número de prueba de Meta (WABA + token + plantilla aprobada) y servidor con Chatwoot accesible por HTTPS |
 | P0-02 Mensajes consecutivos | verified (local, simulador Chatwoot) | `src/server/flows/trigger.ts`, `runtime.ts`, `policy.ts`, `outbound.ts`, migración 0004 | caddd4f | `tests/integration/engine-reliability.test.ts` (4 casos de ráfaga), harness S24/S24b/S24c | — |
 | P0-03 Worker concurrente | verified (local) | `src/server/jobs/worker.ts`, `queue.ts` | caddd4f | engine-reliability "empresa B no espera", harness S48, S44-S47 (40 conv: 14,2 s → 2,8 s) | Prueba de carga con Chatwoot real: pendiente |
 | P0-04 IA real | **blocked** | — | — | Adaptadores probados contra simulador + truncado por `finish_reason/stop_reason/finishReason` | Claves de prueba con tope de gasto (OpenAI-compatible, Anthropic, Gemini) |
@@ -23,7 +23,7 @@ Estados: `pending` · `in_progress` · `implemented` (código listo, sin prueba 
 | P1-10 Rate limiting | verified | `auth/index.ts`, `http/rate-limit.ts`, `http/api.ts`, `env.ts` | 5adde84 | `tests/integration/auth-rate-limit.test.ts` (IP falsificada, por cuenta, multi-instancia) | — |
 | P1-11 Backups y monitoreo | verified (local) | `scripts/backup.sh`, `restore.sh`, `backup-restore-test.sh`, `src/server/ops/monitor.ts`, `infra/ops/*` | 3570c6f | Backup cifrado + copia rclone verificada + restore real + alerta de prueba (ver 06) | Almacenamiento externo real y canal de alertas reales: requieren cuentas del usuario |
 | P1-12 CI | implemented | `.github/workflows/ci.yml`, `.gitleaksignore` | 3570c6f | Lint/typecheck/tests/build/gitleaks corridos localmente; el workflow no corrió en GitHub (sin push autorizado) | Push de la rama a GitHub |
-| P1-13 Plantillas WhatsApp | verified (contrato v4.19 + simulador) | `services/templates.ts`, `outbound.ts`, route, `template-dialog.tsx`, `composer.tsx` | 2f43de7 | `tests/integration/whatsapp-templates.test.ts`; contrato leído del código fuente de Chatwoot v4.19 | Envío real a Meta: P0-01 |
+| P1-13 Plantillas WhatsApp | verified (contrato v4.19 + Chatwoot real + E2E) | `services/templates.ts`, `outbound.ts`, route, `template-dialog.tsx`, `composer.tsx` | 2f43de7, dd963b9 | `tests/integration/whatsapp-templates.test.ts`, `tests/e2e/templates.spec.ts`, Chatwoot real R7 | Envío real a Meta: P0-01 |
 | P1-14 Suspensión | verified | `src/server/http/api.ts`, rutas de resguardo | 5adde84 | `tests/integration/suspension-policy.test.ts` | — |
 | P2-04 Etapas en cotización | verified | `ai-turn.ts` | caddd4f | engine-reliability "cotización sin permiso" | — |
 | P2-05 Doble ejecución | verified | `queue.ts`, `runtime.ts`, migración 0004 | caddd4f | engine-reliability "dos workers", "fencing", "ejecución abandonada" | — |

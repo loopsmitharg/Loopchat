@@ -23,6 +23,26 @@ Leyenda: `IMPLEMENTED` código completo · `VERIFIED_LOCAL` pruebas locales auto
 | 12 QA, seguridad, responsive | VERIFIED_LOCAL | Pruebas reales listadas en `qa-final.md` |
 | 13 Ship V1 | **VERIFIED_LOCAL / BLOCKED_EXTERNAL** (no `SHIPPED`) | Despliegue y validación real requieren VPS, dominio, Meta y claves IA |
 
+## Remediación P0/P1 (2026-11-05) — rama `fix/loopchat-production-readiness`
+
+Informes en `docs/readiness-remediation/` (registro persistente: `00_PROGRESS_REGISTER.md`; resumen: `09_EXECUTIVE_REPORT.md`). No fusionado a `main`, nada desplegado.
+
+| Comando / prueba | Resultado |
+|---|---|
+| `npm run lint` · `npm run typecheck` (ahora reproducible) · `npm run build` | ✅ |
+| `npm run test` | ✅ 30 archivos / 270 tests (antes 209) |
+| `npm run test:e2e` | ✅ 27/27 en la primera corrida (nuevo `templates.spec.ts`) |
+| Harness conversacional (50) | 49 PASS / 1 PARTIAL (S38, requiere LLM real) / 0 FAIL — antes 41/4/5 |
+| Sondas HTTP A/B sobre build de producción | ✅ 12/12 |
+| Chatwoot CE 4.19 **real** (Docker local, sin Meta) | ✅ 10/10 (`tests/audit/chatwoot-real.audit.test.ts`) |
+| Backup cifrado + copia rclone verificada + restore real + alerta de prueba | ✅ local; bucket y canal reales: BLOCKED_EXTERNAL |
+| `npm audit --omit=dev --audit-level=high` · Gitleaks | ✅ |
+| Semgrep | NOT_DONE local (sin binario Windows); configurado en CI |
+| CI en GitHub | IMPLEMENTED, no ejecutado (sin push autorizado) |
+| P0-01 Meta real · P0-04 IA real | **BLOCKED_EXTERNAL** |
+
+Migraciones nuevas: `0004_reliability` (aditiva, limpia duplicados activos), `0005_ops` (aditiva). Nota: **7,0/10** (calculada 7,25, tope por WhatsApp sin validar con Meta).
+
 ## Auditoría integral independiente (2026-11-04)
 
 Informes en `docs/audits/` (resumen: `08_EXECUTIVE_SUMMARY.md`). Solo diagnóstico: **no se modificó lógica productiva**. Entorno: Windows 10, Node 24.19, PostgreSQL 17.5 embebido (Docker Desktop no arrancó), simuladores de contrato; sin Meta/Chatwoot/IA reales.

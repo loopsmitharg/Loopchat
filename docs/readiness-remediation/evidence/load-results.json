@@ -1,0 +1,54 @@
+{
+  "generatedAt": "2026-11-05T04:22:31.819Z",
+  "base": "http://localhost:3200",
+  "endpoints": [
+    "/api/v1/conversations?assignee=all&status=open&mode=all&q=",
+    "/api/v1/board?pipelineId={PID}&q=",
+    "/api/v1/metrics",
+    "/api/v1/contacts",
+    "/api/v1/bots",
+    "/api/health"
+  ],
+  "results": [
+    {
+      "concurrency": 1,
+      "requests": 120,
+      "errors": 0,
+      "rps": 58,
+      "p50": 16,
+      "p95": 28,
+      "p99": 29,
+      "max": 30
+    },
+    {
+      "concurrency": 10,
+      "requests": 600,
+      "errors": 0,
+      "rps": 356,
+      "p50": 24,
+      "p95": 53,
+      "p99": 64,
+      "max": 77
+    },
+    {
+      "concurrency": 25,
+      "requests": 1000,
+      "errors": 0,
+      "rps": 409,
+      "p50": 55,
+      "p95": 108,
+      "p99": 130,
+      "max": 163
+    },
+    {
+      "concurrency": 50,
+      "requests": 1500,
+      "errors": 0,
+      "rps": 438,
+      "p50": 106,
+      "p95": 197,
+      "p99": 210,
+      "max": 232
+    }
+  ]
+}
