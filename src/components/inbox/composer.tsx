@@ -28,7 +28,8 @@ export function Composer({
   onSent: () => void;
   onError: (msg: string) => void;
 }) {
-  const [mode, setMode] = useState<"message" | "note">(replyDisabledReason && canNote ? "note" : "message");
+  // sin poder responder, abre en nota interna; salvo que se pueda reabrir con una plantilla
+  const [mode, setMode] = useState<"message" | "note">(replyDisabledReason && canNote && !templateAllowed ? "note" : "message");
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [templateOpen, setTemplateOpen] = useState(false);
