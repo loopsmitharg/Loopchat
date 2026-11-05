@@ -53,6 +53,12 @@ docker compose -f infra/loopchat/docker-compose.yml --env-file .env.production r
 | `LOOPCHAT_DEMO_MODE` | `false` |
 | `HEALTH_TOKEN` | opcional: habilita `/api/health` detallado con header `x-health-token` |
 
+> **Webhook Chatwoot → Loopchat (verificado contra Chatwoot v4.19 real, 2026-11-05):** Chatwoot valida el destino de los
+> webhooks con su filtro SSRF y descarta los que resuelven a IPs privadas (`Hostname … has no public ip addresses` en el log
+> de Sidekiq; el webhook nunca llega). Configurar `CHATWOOT_WEBHOOK_TARGET_URL` (o `APP_URL`) con la **URL pública HTTPS** de
+> Loopchat. Si se decide usar una URL interna, Chatwoot debe correr con `SAFE_FETCH_ALLOW_PRIVATE_NETWORK=true`, lo que
+> también relaja su protección SSRF para otras descargas.
+
 ## 3. Proxy TLS (ejemplo Caddy)
 
 ```

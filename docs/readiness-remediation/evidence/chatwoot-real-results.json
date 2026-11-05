@@ -1,0 +1,67 @@
+{
+  "generatedAt": "2026-11-05T04:20:03.070Z",
+  "chatwoot": "http://localhost:3001",
+  "scope": "Chatwoot CE real con bandeja API (sin Meta)",
+  "results": [
+    {
+      "id": "R0",
+      "check": "Versión de Chatwoot",
+      "obtained": "{\"version\":\"4.19.0\",\"timestamp\":\"2026-11-05 04:19:47\",\"queue_services\":\"ok\",\"data_services\":\"ok\"}",
+      "verdict": "PASS"
+    },
+    {
+      "id": "R1",
+      "check": "Aprovisionamiento por Platform API: cuenta, usuario de servicio y webhook con secreto",
+      "obtained": "cuenta=5; webhooks=[\"http://host.docker.internal:3013/api/webhooks/chatwoot/NiMPMBdWImfMiRCWz-Ot07-KMxWAcZzf\"]; secreto guardado=true",
+      "verdict": "PASS"
+    },
+    {
+      "id": "R2",
+      "check": "Webhook real firmado (HMAC de Chatwoot) aceptado y procesado",
+      "obtained": "webhooks recibidos=4; conversación sincronizada=true",
+      "verdict": "PASS"
+    },
+    {
+      "id": "R3",
+      "check": "Respuesta automática del bot publicada en Chatwoot por la API real",
+      "obtained": "respondió=true; latencia ≈ 1021 ms (incluye polling del test)",
+      "verdict": "PASS"
+    },
+    {
+      "id": "R4",
+      "check": "Eco del webhook real concilia el mensaje del bot (estado enviado, id de Chatwoot)",
+      "obtained": "conciliado=true",
+      "verdict": "PASS"
+    },
+    {
+      "id": "R5",
+      "check": "Ráfaga real: el pedido de asesor deriva y la respuesta en curso no sale",
+      "obtained": "derivó=true; respuesta tardía enviada=false",
+      "verdict": "PASS"
+    },
+    {
+      "id": "R6",
+      "check": "Respuesta humana idempotente por la API real (doble envío con la misma clave)",
+      "obtained": "copias en Chatwoot=1",
+      "verdict": "PASS"
+    },
+    {
+      "id": "R7",
+      "check": "template_params aceptado y guardado por Chatwoot real (verificado en el eco firmado; sin envío a Meta: bandeja API)",
+      "obtained": "{\"name\":\"seguimiento_consulta\",\"language\":\"es_AR\",\"processed_params\":{\"body\":{\"1\":\"Ana\",\"2\":\"taladros\"}}}",
+      "verdict": "PASS"
+    },
+    {
+      "id": "R8",
+      "check": "Sin ejecuciones colgadas",
+      "obtained": "completed,handed_off",
+      "verdict": "PASS"
+    },
+    {
+      "id": "R9",
+      "check": "Carga con Chatwoot real: 24 mensajes simultáneos en 4 empresas, respuesta del bot publicada en Chatwoot",
+      "obtained": "respondidas=24/24; total=6367 ms; mensaje→respuesta p50=5930 ms p95=6322 ms máx=6363 ms (incluye polling del test ~1 s)",
+      "verdict": "PASS"
+    }
+  ]
+}
