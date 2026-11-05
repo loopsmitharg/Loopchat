@@ -12,7 +12,7 @@ import {
   TENANT_COOKIE,
 } from "../authz/context";
 import { log } from "../log";
-import { AppError, badRequest, forbidden } from "./errors";
+import { AppError, badRequest, forbidden, tooLarge } from "./errors";
 import { rateLimit } from "./rate-limit";
 
 type RouteParams = { params: Promise<Record<string, string>> };
@@ -44,12 +44,47 @@ export function errorResponse(err: unknown) {
   return NextResponse.json({ error: { code: "internal_error", message: "Error interno. Probá de nuevo." } }, { status: 500 });
 }
 
+/**
+ * Lee el cuerpo con un tope real: rechaza por Content-Length declarado y corta el stream apenas
+ * se supera el límite (cubre Transfer-Encoding: chunked). Nunca bufferiza más de `max` bytes.
+ */
+export async function readBodyLimited(req: Request, max: number): Promise<Buffer> {
+  const declared = req.headers.get("content-length");
+  if (declared !== null && (!/^\d+$/.test(declared) || Number(declared) > max)) throw tooLarge();
+  if (!req.body) return Buffer.alloc(0);
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > max) {
+      await reader.cancel().catch(() => {});
+      throw tooLarge();
+    }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks);
+}
+
+/** multipart/form-data con tope de tamaño (el parseo ocurre sobre el buffer ya acotado). */
+export async function readFormLimited(req: Request, max: number): Promise<FormData> {
+  const buf = await readBodyLimited(req, max);
+  try {
+    return await new Response(new Uint8Array(buf), { headers: { "content-type": req.headers.get("content-type") ?? "" } }).formData();
+  } catch {
+    throw badRequest("Formulario inválido.");
+  }
+}
+
+export const MAX_JSON_BYTES = 256 * 1024;
+
 export async function readJson<T>(req: NextRequest, schema: ZodType<T>): Promise<T> {
-  const len = Number(req.headers.get("content-length") ?? 0);
-  if (len > 256 * 1024) throw badRequest("Cuerpo demasiado grande.");
+  const buf = await readBodyLimited(req, MAX_JSON_BYTES);
   let raw: unknown;
   try {
-    raw = await req.json();
+    raw = JSON.parse(buf.toString("utf8"));
   } catch {
     throw badRequest("JSON inválido.");
   }

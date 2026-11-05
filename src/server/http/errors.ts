@@ -20,6 +20,7 @@ export const quotaExceeded = (msg: string, details?: Record<string, unknown>) =>
   new AppError(402, "quota_exceeded", msg, details);
 export const policyBlocked = (msg: string, details?: Record<string, unknown>) =>
   new AppError(422, "policy_blocked", msg, details);
+export const tooLarge = (msg = "El contenido supera el tamaño permitido.") => new AppError(413, "payload_too_large", msg);
 export const tooMany = () => new AppError(429, "rate_limited", "Demasiados intentos. Probá de nuevo en un minuto.");
 export const upstream = (msg: string, details?: Record<string, unknown>) =>
   new AppError(502, "upstream_error", msg, details);

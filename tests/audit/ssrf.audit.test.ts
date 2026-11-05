@@ -16,5 +16,6 @@ describe("ssrf (modo producción)", () => {
     env.LOOPCHAT_ALLOW_PRIVATE_URLS = prev.a;
     (await import("node:fs")).writeFileSync("docs/audits/evidence/ssrf-results.json", JSON.stringify({ blockedOk, bypass }, null, 2));
     expect(blockedOk.every(([, a]) => a === false)).toBe(true);
+    expect(bypass.filter(([u]) => !String(u).includes("nip.io")).every(([, a]) => a === false)).toBe(true);
   });
 });

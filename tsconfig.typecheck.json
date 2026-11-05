@@ -1,0 +1,7 @@
+{
+  "//": "Typecheck reproducible: solo fuentes + tipos de rutas regenerados por `next typegen` (.next/types). Excluye cachés de `next dev` (.next/dev, .next-e2e) que pueden quedar a medio escribir.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "incremental": false },
+  "include": ["next-env.d.ts", "src/**/*.ts", "src/**/*.tsx", "tests/**/*.ts", "tests/**/*.mts", "scripts/**/*.ts", "tools/**/*.ts", "*.ts", "*.mts", ".next/types/**/*.ts"],
+  "exclude": ["node_modules", ".next/dev", ".next-e2e"]
+}

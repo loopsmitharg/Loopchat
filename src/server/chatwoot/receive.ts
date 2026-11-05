@@ -7,7 +7,7 @@ import { enqueue } from "../jobs/queue";
 import { log } from "../log";
 import { verifyChatwootSignature } from "./webhook";
 
-const MAX_BODY = 512 * 1024;
+export const MAX_WEBHOOK_BODY = 512 * 1024;
 
 /**
  * Receptor de eventos Chatwoot: autentica (firma HMAC + mapeo de cuenta), deduplica
@@ -15,7 +15,7 @@ const MAX_BODY = 512 * 1024;
  */
 export async function receiveChatwootWebhook(input: { key: string; rawBody: string; signature: string | null; timestamp: string | null; deliveryId: string | null }) {
   if (!input.key || input.key.length > 64) return { status: 404, body: { error: "not_found" } };
-  if (input.rawBody.length > MAX_BODY) return { status: 413, body: { error: "too_large" } };
+  if (input.rawBody.length > MAX_WEBHOOK_BODY) return { status: 413, body: { error: "too_large" } };
   const mapping = await db.query.chatwootAccounts.findFirst({ where: eq(chatwootAccounts.webhookKey, input.key) });
   if (!mapping || !mapping.webhookSecretEnc) return { status: 404, body: { error: "not_found" } };
   const secret = decryptSecret(mapping.webhookSecretEnc, `cwwh:${mapping.tenantId}`);
