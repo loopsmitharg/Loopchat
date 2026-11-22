@@ -1,6 +1,6 @@
 # Estado de ejecución — Loopchat V1
 
-**Última actualización:** 2026-10-21 · **Agente:** implementación autónoma (Claude) · **Entorno de verificación:** Linux (Node 22, PostgreSQL 16, Chromium 1194), sin acceso a Docker Hub, Meta ni proveedores de IA reales.
+**Última actualización:** 2026-11-21 (entorno local real en Windows; ver sección "Entorno local real + Todo Trabajo") · **Agente:** implementación autónoma (Claude) · **Entorno de verificación:** Linux (Node 22, PostgreSQL 16, Chromium 1194), sin acceso a Docker Hub, Meta ni proveedores de IA reales.
 
 Leyenda: `IMPLEMENTED` código completo · `VERIFIED_LOCAL` pruebas locales automatizadas pasan · `VERIFIED_REAL` probado contra servicios reales · `BLOCKED_EXTERNAL` depende de acceso externo · `NOT_DONE` no realizado.
 
@@ -22,6 +22,22 @@ Leyenda: `IMPLEMENTED` código completo · `VERIFIED_LOCAL` pruebas locales auto
 | 11 Dashboard y operaciones | VERIFIED_LOCAL | — |
 | 12 QA, seguridad, responsive | VERIFIED_LOCAL | Pruebas reales listadas en `qa-final.md` |
 | 13 Ship V1 | **VERIFIED_LOCAL / BLOCKED_EXTERNAL** (no `SHIPPED`) | Despliegue y validación real requieren VPS, dominio, Meta y claves IA |
+
+## Entorno local real + Todo Trabajo (2026-11-21) — rama `fix/loopchat-production-readiness`
+
+Informes en `docs/local-whatsapp-setup/` (01–09). Nada desplegado ni fusionado.
+
+| Área | Estado | Evidencia |
+|---|---|---|
+| Docker, Chatwoot CE 4.19 real (Rails, Sidekiq, PostgreSQL, Redis), Loopchat web (`next start`) + worker | VERIFIED_REAL (local) | `06_TEST_RESULTS.md` §A |
+| HTTPS público por Cloudflare Quick Tunnels (URLs temporales) | VERIFIED_REAL | §B |
+| Integración Chatwoot ↔ Loopchat por webhook público firmado, SSRF de Chatwoot activo | VERIFIED_REAL — audit 10/10 + E2E con el worker en ejecución | §C |
+| Empresa Todo Trabajo: perfil, 13 reglas, 7 documentos, 14 productos, 4 pipelines, 7 bots v2, equipo v2 activo | IMPLEMENTED + VERIFIED_LOCAL (simulador 19/19, IA simulada) | `09_TODO_TRABAJO_CHATBOTS.md` |
+| `scripts/dev/dev-{start,stop,status,logs}.ps1` | VERIFIED_LOCAL (arranque desde cero, idempotencia, persistencia) | §A |
+| Meta / WhatsApp Cloud | BLOCKED_EXTERNAL (credenciales) | `04_META_CONFIGURATION.md` |
+| IA real | BLOCKED_EXTERNAL (clave) | `08_NEXT_STEPS.md` |
+
+Comandos: `npm run db:migrate` (3 pendientes, con backup previo) · `npm run build` PASS · `npm run typecheck` PASS · `vitest tests/unit` 153/153 · `npm run lint`: errores solo en `.agents/skills` (ajeno al repo) · `tests/audit/chatwoot-real.audit.test.ts` 10/10 · `scripts/simulate-todo-trabajo.ts` 19/19 · `scripts/smoke-chatwoot-todo-trabajo.ts` PASS. Aviso: Next.js 16.4.2 reporta una vulnerabilidad conocida al compilar (actualizar en un PR propio).
 
 ## Remediación P0/P1 (2026-11-05) — rama `fix/loopchat-production-readiness`
 

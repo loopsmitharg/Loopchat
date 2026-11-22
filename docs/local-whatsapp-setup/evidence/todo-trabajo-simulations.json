@@ -1,0 +1,1615 @@
+{
+  "generatedAt": "2026-11-22T00:38:23.218Z",
+  "ai": "IA SIMULADA del simulador de Loopchat (determinista; no es un modelo real)",
+  "teamId": "d0fa0190-2497-4473-8332-87a434de1e74",
+  "results": [
+    {
+      "id": "S01",
+      "name": "Empleos",
+      "verdict": "PASS",
+      "note": null,
+      "checks": [
+        {
+          "check": "bots que responden = [\"Asesor de Empleos\"]",
+          "ok": true
+        },
+        {
+          "check": "sin oportunidad comercial",
+          "ok": true
+        },
+        {
+          "check": "conocimiento recuperado incluye \"Ofertas de Postulación Interna\"",
+          "ok": true
+        }
+      ],
+      "turns": [
+        {
+          "message": "Hola, busco trabajo en administración en Córdoba.",
+          "activeBot": "Asesor de Empleos",
+          "previousBot": "Recepción Todo Trabajo",
+          "transfer": [
+            {
+              "reason": "Palabra clave (Palabras: trabajo, empleo, empleos…)",
+              "kind": "keyword"
+            }
+          ],
+          "aiCalled": true,
+          "routeAi": false,
+          "tools": [
+            "classify",
+            "use_knowledge",
+            "use_catalog"
+          ],
+          "blocked": [],
+          "handoff": null,
+          "pipeline": "A · Consultas comerciales Premium",
+          "stage": null,
+          "actions": []
+        }
+      ],
+      "events": [
+        {
+          "kind": "user",
+          "text": "Hola, busco trabajo en administración en Córdoba."
+        },
+        {
+          "kind": "action",
+          "text": "Derivación interna: Recepción Todo Trabajo → Asesor de Empleos (Palabra clave (Palabras: trabajo, empleo, empleos…))"
+        },
+        {
+          "kind": "system",
+          "text": "IA simulada (sin llamar al proveedor)"
+        },
+        {
+          "kind": "system",
+          "text": "Conocimiento usado: Todo Trabajo — Empleos, postulaciones y canal de difusión, Todo Trabajo — Premium y suscripciones"
+        },
+        {
+          "kind": "bot",
+          "text": "(IA simulada · trato: vos, sin vender) Respuesta para: \"Hola, busco trabajo en administración en Córdoba.\""
+        }
+      ],
+      "opportunities": [],
+      "providedToAi": {
+        "knowledge": [
+          "1. **Ofertas de Postulación Interna (Directas en Plataforma):**\n - El candidato se postula con un clic desde Todo Trabajo.\n - Al aplicar, el candidato desbloque",
+          "### 2.1. Planes de Suscripción Premium para Candidatos\nLa plataforma ofrece un nivel de acceso **Estándar (Gratuito)** y **Planes de Suscripción Premium** que d"
+        ],
+        "catalog": []
+      }
+    },
+    {
+      "id": "S02",
+      "name": "Premium",
+      "verdict": "PASS",
+      "note": null,
+      "checks": [
+        {
+          "check": "bots que responden = [\"Asesor Premium y Beneficios\"]",
+          "ok": true
+        },
+        {
+          "check": "catálogo provisto incluye \"Premium 3 meses\"",
+          "ok": true
+        }
+      ],
+      "turns": [
+        {
+          "message": "¿Cuánto sale el Premium de tres meses?",
+          "activeBot": "Asesor Premium y Beneficios",
+          "previousBot": "Recepción Todo Trabajo",
+          "transfer": [
+            {
+              "reason": "Palabra clave (Palabras: premium, suscripcion, suscribirme…)",
+              "kind": "keyword"
+            }
+          ],
+          "aiCalled": true,
+          "routeAi": false,
+          "tools": [
+            "classify",
+            "use_knowledge",
+            "use_catalog"
+          ],
+          "blocked": [],
+          "handoff": null,
+          "pipeline": "A · Consultas comerciales Premium",
+          "stage": null,
+          "actions": []
+        }
+      ],
+      "events": [
+        {
+          "kind": "user",
+          "text": "¿Cuánto sale el Premium de tres meses?"
+        },
+        {
+          "kind": "system",
+          "text": "Necesidad detectada: Ventas (precios, compras, presupuestos) (señales: cuanto sale) — sin IA"
+        },
+        {
+          "kind": "action",
+          "text": "Derivación interna: Recepción Todo Trabajo → Asesor Premium y Beneficios (Palabra clave (Palabras: premium, suscripcion, suscribirme…))"
+        },
+        {
+          "kind": "system",
+          "text": "IA simulada (sin llamar al proveedor)"
+        },
+        {
+          "kind": "system",
+          "text": "Conocimiento usado: Todo Trabajo — Premium y suscripciones, Todo Trabajo — Programa Invitá y Ganá (referidos y recompensas), Todo Trabajo — Premium y suscripciones, Todo Trabajo — Programa Invitá y Ganá (referidos y recompensas)"
+        },
+        {
+          "kind": "system",
+          "text": "Productos consultados: Premium 9 meses (precio: 9000; stock: sin especificar) · Premium 3 meses (precio: 6000; stock: sin especificar) · Premium 1 mes (precio: 2995; stock: sin especificar)"
+        },
+        {
+          "kind": "bot",
+          "text": "(IA simulada · trato: vos) Tenemos Premium 9 meses: el precio es ARS 9.000."
+        }
+      ],
+      "opportunities": [],
+      "providedToAi": {
+        "knowledge": [
+          "### 2.1. Planes de Suscripción Premium para Candidatos\nLa plataforma ofrece un nivel de acceso **Estándar (Gratuito)** y **Planes de Suscripción Premium** que d",
+          "### 6.2. Esquema de Acumulación de Puntos (Cómo ganan los usuarios)\n| Acción / Servicio Contratado por el Referido | Puntos Otorgados al Referente |\n| :--- | :-",
+          "#### Comparativa de Beneficios: Estándar vs. Premium\n| Característica / Beneficio | Plan Estándar (Sin Suscripción) | Plan Premium Activo |\n| :--- | :---: | :--",
+          "## 6. Programa de Fidelización y Afiliados: \"Invitá y Ganá\"\n\nSistema gamificado de crecimiento orgánico y recompensas donde cada usuario recibe un **Código Únic"
+        ],
+        "catalog": [
+          "Premium 9 meses — 9000",
+          "Premium 3 meses — 6000",
+          "Premium 1 mes — 2995"
+        ]
+      }
+    },
+    {
+      "id": "S03",
+      "name": "ATS",
+      "verdict": "PASS",
+      "note": null,
+      "checks": [
+        {
+          "check": "bots que responden = [\"Especialista en CV e IA\"]",
+          "ok": true
+        },
+        {
+          "check": "conocimiento recuperado incluye \"ATS\"",
+          "ok": true
+        }
+      ],
+      "turns": [
+        {
+          "message": "Quiero saber si mi currículum pasa un filtro ATS.",
+          "activeBot": "Especialista en CV e IA",
+          "previousBot": "Recepción Todo Trabajo",
+          "transfer": [
+            {
+              "reason": "Palabra clave (Palabras: cv, curriculum, curriculo…)",
+              "kind": "keyword"
+            }
+          ],
+          "aiCalled": true,
+          "routeAi": false,
+          "tools": [
+            "classify",
+            "use_knowledge",
+            "use_catalog",
+            "create_opportunity"
+          ],
+          "blocked": [],
+          "handoff": null,
+          "pipeline": "C · Servicios de CV y Carrera",
+          "stage": "Nuevo interesado",
+          "actions": [
+            "Crearía oportunidad \"Quiero saber si mi currículum pasa un filtro ATS.\" en etapa \"Nuevo interesado\" (pipeline \"C · Servicios de CV y Carrera\")"
+          ]
+        }
+      ],
+      "events": [
+        {
+          "kind": "user",
+          "text": "Quiero saber si mi currículum pasa un filtro ATS."
+        },
+        {
+          "kind": "action",
+          "text": "Derivación interna: Recepción Todo Trabajo → Especialista en CV e IA (Palabra clave (Palabras: cv, curriculum, curriculo…))"
+        },
+        {
+          "kind": "system",
+          "text": "IA simulada (sin llamar al proveedor)"
+        },
+        {
+          "kind": "system",
+          "text": "Conocimiento usado: Todo Trabajo — CV, ATS y herramientas de IA"
+        },
+        {
+          "kind": "system",
+          "text": "Productos consultados: Servicio: Escaneo y Diagnóstico de CV (Filtro ATS) (precio: no informado; stock: sin especificar) · Servicio: Profesionalización y Armado de CV en Formato ATS (precio: no informado; stock: sin especificar) · Suite CV: ATS Check (diagnóstico técnico) (precio: no informado; stock: sin especificar) · Pack Avanzado — 10 créditos (Suite CV) (precio: 10000; stock: sin especificar) · Pack Intermedio — 6 créditos (Suite CV) (precio: 7000; stock: sin especificar)"
+        },
+        {
+          "kind": "action",
+          "text": "Crearía oportunidad \"Quiero saber si mi currículum pasa un filtro ATS.\" en etapa \"Nuevo interesado\" (pipeline \"C · Servicios de CV y Carrera\")"
+        },
+        {
+          "kind": "bot",
+          "text": "(IA simulada · trato: vos) Tenemos Servicio: Escaneo y Diagnóstico de CV (Filtro ATS): no tengo el precio cargado; si querés lo consulto con el equipo."
+        }
+      ],
+      "opportunities": [
+        {
+          "stageId": "6d13d828-0893-4693-af04-9cb34473a8ca",
+          "title": "Quiero saber si mi currículum pasa un filtro ATS.",
+          "stageName": "Nuevo interesado",
+          "pipelineName": "C · Servicios de CV y Carrera"
+        }
+      ],
+      "providedToAi": {
+        "knowledge": [
+          "### 2.2. Servicios de Optimización de Perfil y Consultoría de Carrera\nServicios personalizados orientados a maximizar la tasa de contacto en entrevistas laboral"
+        ],
+        "catalog": [
+          "Servicio: Escaneo y Diagnóstico de CV (Filtro ATS) — precio NO INFORMADO",
+          "Servicio: Profesionalización y Armado de CV en Formato ATS — precio NO INFORMADO",
+          "Suite CV: ATS Check (diagnóstico técnico) — precio NO INFORMADO",
+          "Pack Avanzado — 10 créditos (Suite CV) — 10000",
+          "Pack Intermedio — 6 créditos (Suite CV) — 7000"
+        ]
+      }
+    },
+    {
+      "id": "S04",
+      "name": "Créditos Harvard",
+      "verdict": "PASS",
+      "note": null,
+      "checks": [
+        {
+          "check": "bots que responden = [\"Especialista en CV e IA\"]",
+          "ok": true
+        },
+        {
+          "check": "catálogo provisto incluye \"5 créditos\"",
+          "ok": true
+        },
+        {
+          "check": "conocimiento recuperado incluye \"Requiere haber completado previamente\"",
+          "ok": true
+        }
+      ],
+      "turns": [
+        {
+          "message": "¿Cuántos créditos necesito para generar un CV Harvard?",
+          "activeBot": "Especialista en CV e IA",
+          "previousBot": "Recepción Todo Trabajo",
+          "transfer": [
+            {
+              "reason": "Palabra clave (Palabras: cv, curriculum, curriculo…)",
+              "kind": "keyword"
+            }
+          ],
+          "aiCalled": true,
+          "routeAi": false,
+          "tools": [
+            "classify",
+            "use_knowledge",
+            "use_catalog"
+          ],
+          "blocked": [],
+          "handoff": null,
+          "pipeline": "C · Servicios de CV y Carrera",
+          "stage": null,
+          "actions": []
+        }
+      ],
+      "events": [
+        {
+          "kind": "user",
+          "text": "¿Cuántos créditos necesito para generar un CV Harvard?"
+        },
+        {
+          "kind": "action",
+          "text": "Derivación interna: Recepción Todo Trabajo → Especialista en CV e IA (Palabra clave (Palabras: cv, curriculum, curriculo…))"
+        },
+        {
+          "kind": "system",
+          "text": "IA simulada (sin llamar al proveedor)"
+        },
+        {
+          "kind": "system",
+          "text": "Conocimiento usado: Todo Trabajo — CV, ATS y herramientas de IA, Todo Trabajo — CV, ATS y herramientas de IA, Todo Trabajo — CV, ATS y herramientas de IA, Todo Trabajo — CV, ATS y herramientas de IA"
+        },
+        {
+          "kind": "system",
+          "text": "Productos consultados: Suite CV: Generador de CV corregido en PDF formato Harvard (5 créditos) (precio: no informado; stock: sin especificar) · Suite CV: Carta de presentación con IA (1 crédito) (precio: no informado; stock: sin especificar) · Suite CV: CV Quality & Job Match con IA (1 crédito) (precio: no informado; stock: sin especificar) · Pack Avanzado — 10 créditos (Suite CV) (precio: 10000; stock: sin especificar) · Pack Intermedio — 6 créditos (Suite CV) (precio: 7000; stock: sin especificar)"
+        },
+        {
+          "kind": "bot",
+          "text": "(IA simulada · trato: vos) Tenemos Suite CV: Generador de CV corregido en PDF formato Harvard (5 créditos): no tengo el precio cargado; si querés lo consulto con el equipo."
+        }
+      ],
+      "opportunities": [],
+      "providedToAi": {
+        "knowledge": [
+          "idiomas de fechas.\n - *Resultados cuantificados (10%)*: Presencia de métricas de impacto (`%`, montos, volúmenes, KPIs).\n - Incluye **detector de habilidades té",
+          "eal respaldada por citas del documento original (sin inventar experiencias ni métricas).\n - Exporta un **documento PDF A4 de una sola columna estilo Harvard**, ",
+          "### 2.3. Suite Tecnológica: Analizador de CV con ATS e Inteligencia Artificial\nPlataforma propietaria basada en **créditos prepagos** para el diagnóstico, mejor",
+          "#### Módulos y Consumo de Créditos de la Suite CV\n1. **ATS Check (Diagnóstico Técnico Determinístico) — *Sin costo de créditos al cargar el CV***\n - Soporta car"
+        ],
+        "catalog": [
+          "Suite CV: Generador de CV corregido en PDF formato Harvard (5 créditos) — precio NO INFORMADO",
+          "Suite CV: Carta de presentación con IA (1 crédito) — precio NO INFORMADO",
+          "Suite CV: CV Quality & Job Match con IA (1 crédito) — precio NO INFORMADO",
+          "Pack Avanzado — 10 créditos (Suite CV) — 10000",
+          "Pack Intermedio — 6 créditos (Suite CV) — 7000"
+        ]
+      }
+    },
+    {
+      "id": "S05",
+      "name": "Empresas",
+      "verdict": "PASS",
+      "note": "La IA simulada derivó porque el mensaje contiene \"persona\" (en \"personal\"): artefacto del simulador; el enrutamiento y el bot elegido son los esperados.",
+      "checks": [
+        {
+          "check": "bots que responden = [\"Asesor de Empresas\"]",
+          "ok": true
+        },
+        {
+          "check": "conocimiento recuperado incluye \"revisión de calidad\"",
+          "ok": true
+        }
+      ],
+      "turns": [
+        {
+          "message": "Tengo una empresa y quiero publicar una búsqueda de personal.",
+          "activeBot": "Asesor de Empresas",
+          "previousBot": "Recepción Todo Trabajo",
+          "transfer": [
+            {
+              "reason": "Palabra clave (Palabras: mi empresa, una empresa, tengo una empresa…)",
+              "kind": "keyword"
+            }
+          ],
+          "aiCalled": true,
+          "routeAi": false,
+          "tools": [
+            "classify",
+            "use_knowledge",
+            "handoff"
+          ],
+          "blocked": [],
+          "handoff": {
+            "code": "ai",
+            "label": "La IA pidió una persona"
+          },
+          "pipeline": "B · Empresas B2B",
+          "stage": null,
+          "actions": []
+        }
+      ],
+      "events": [
+        {
+          "kind": "user",
+          "text": "Tengo una empresa y quiero publicar una búsqueda de personal."
+        },
+        {
+          "kind": "action",
+          "text": "Derivación interna: Recepción Todo Trabajo → Asesor de Empresas (Palabra clave (Palabras: mi empresa, una empresa, tengo una empresa…))"
+        },
+        {
+          "kind": "system",
+          "text": "IA simulada (sin llamar al proveedor)"
+        },
+        {
+          "kind": "system",
+          "text": "Conocimiento usado: Todo Trabajo — Empresas y reclutamiento (B2B), Todo Trabajo — Empresas y reclutamiento (B2B)"
+        },
+        {
+          "kind": "bot",
+          "text": "Te paso con una persona del equipo."
+        },
+        {
+          "kind": "action",
+          "text": "Derivaría a una persona (La IA pidió una persona): El cliente pidió hablar con una persona (simulación)"
+        },
+        {
+          "kind": "action",
+          "text": "La conversación quedaría sin responsable, marcada como \"Pide humano\"."
+        },
+        {
+          "kind": "action",
+          "text": "Crearía una tarea para que el equipo atienda la conversación."
+        }
+      ],
+      "opportunities": [],
+      "providedToAi": {
+        "knowledge": [
+          "- **Alta y Gestión de Perfil Corporativo:** Registro de razón social/nombre comercial, CUIT, descripción institucional, ubicación exacta y canales de contacto.\n",
+          "## 4. Soluciones para Empresas y Reclutadores (B2B)\n\nTodo Trabajo provee a las empresas un entorno dedicado para captar talento y gestionar sus procesos de sele"
+        ],
+        "catalog": []
+      }
+    },
+    {
+      "id": "S05b",
+      "name": "Empresas (oportunidad B2B)",
+      "verdict": "PASS",
+      "note": null,
+      "checks": [
+        {
+          "check": "bots que responden = [\"Asesor de Empresas\"]",
+          "ok": true
+        },
+        {
+          "check": "oportunidad en B · Empresas B2B",
+          "ok": true
+        }
+      ],
+      "turns": [
+        {
+          "message": "Tengo una empresa y quiero publicar una oferta para un puesto administrativo en Rosario.",
+          "activeBot": "Asesor de Empresas",
+          "previousBot": "Recepción Todo Trabajo",
+          "transfer": [
+            {
+              "reason": "Palabra clave (Palabras: mi empresa, una empresa, tengo una empresa…)",
+              "kind": "keyword"
+            }
+          ],
+          "aiCalled": true,
+          "routeAi": false,
+          "tools": [
+            "classify",
+            "use_knowledge",
+            "create_opportunity"
+          ],
+          "blocked": [],
+          "handoff": null,
+          "pipeline": "B · Empresas B2B",
+          "stage": "Nuevo contacto",
+          "actions": [
+            "Crearía oportunidad \"Tengo una empresa y quiero publicar una oferta para un puest\" en etapa \"Nuevo contacto\" (pipeline \"B · Empresas B2B\")"
+          ]
+        }
+      ],
+      "events": [
+        {
+          "kind": "user",
+          "text": "Tengo una empresa y quiero publicar una oferta para un puesto administrativo en Rosario."
+        },
+        {
+          "kind": "system",
+          "text": "Necesidad detectada: Ventas (precios, compras, presupuestos) (señales: oferta) — sin IA"
+        },
+        {
+          "kind": "action",
+          "text": "Derivación interna: Recepción Todo Trabajo → Asesor de Empresas (Palabra clave (Palabras: mi empresa, una empresa, tengo una empresa…))"
+        },
+        {
+          "kind": "system",
+          "text": "IA simulada (sin llamar al proveedor)"
+        },
+        {
+          "kind": "system",
+          "text": "Conocimiento usado: Todo Trabajo — Empresas y reclutamiento (B2B), Todo Trabajo — Empresas y reclutamiento (B2B)"
+        },
+        {
+          "kind": "action",
+          "text": "Crearía oportunidad \"Tengo una empresa y quiero publicar una oferta para un puest\" en etapa \"Nuevo contacto\" (pipeline \"B · Empresas B2B\")"
+        },
+        {
+          "kind": "bot",
+          "text": "(IA simulada · trato: vos, formal) Respuesta para: \"Tengo una empresa y quiero publicar una oferta para un puesto administrativo en \""
+        }
+      ],
+      "opportunities": [
+        {
+          "stageId": "705317b3-36d6-4f83-a61b-0d57747d6723",
+          "title": "Tengo una empresa y quiero publicar una oferta para un puest",
+          "stageName": "Nuevo contacto",
+          "pipelineName": "B · Empresas B2B"
+        }
+      ],
+      "providedToAi": {
+        "knowledge": [
+          "- **Alta y Gestión de Perfil Corporativo:** Registro de razón social/nombre comercial, CUIT, descripción institucional, ubicación exacta y canales de contacto.\n",
+          "## 4. Soluciones para Empresas y Reclutadores (B2B)\n\nTodo Trabajo provee a las empresas un entorno dedicado para captar talento y gestionar sus procesos de sele"
+        ],
+        "catalog": []
+      }
+    },
+    {
+      "id": "S06",
+      "name": "Profesionales",
+      "verdict": "PASS",
+      "note": null,
+      "checks": [
+        {
+          "check": "bots que responden = [\"Asesor de Profesionales\"]",
+          "ok": true
+        },
+        {
+          "check": "sin oportunidad comercial",
+          "ok": true
+        },
+        {
+          "check": "conocimiento recuperado incluye \"Electricidad e Instalaciones\"",
+          "ok": true
+        }
+      ],
+      "turns": [
+        {
+          "message": "Soy electricista y quiero ofrecer mis servicios.",
+          "activeBot": "Asesor de Profesionales",
+          "previousBot": "Recepción Todo Trabajo",
+          "transfer": [
+            {
+              "reason": "Palabra clave (Palabras: ofrecer mis servicios, ofrecer servicios, ofrezco mis servicios…)",
+              "kind": "keyword"
+            }
+          ],
+          "aiCalled": true,
+          "routeAi": false,
+          "tools": [
+            "classify",
+            "use_knowledge"
+          ],
+          "blocked": [
+            "create_opportunity: herramienta no habilitada"
+          ],
+          "handoff": null,
+          "pipeline": "A · Consultas comerciales Premium",
+          "stage": null,
+          "actions": [
+            "Acción bloqueada: create_opportunity: herramienta no habilitada"
+          ]
+        }
+      ],
+      "events": [
+        {
+          "kind": "user",
+          "text": "Soy electricista y quiero ofrecer mis servicios."
+        },
+        {
+          "kind": "action",
+          "text": "Derivación interna: Recepción Todo Trabajo → Asesor de Profesionales (Palabra clave (Palabras: ofrecer mis servicios, ofrecer servicios, ofrezco mis servicios…))"
+        },
+        {
+          "kind": "system",
+          "text": "IA simulada (sin llamar al proveedor)"
+        },
+        {
+          "kind": "system",
+          "text": "Conocimiento usado: Todo Trabajo — Directorio de profesionales independientes, Todo Trabajo — Directorio de profesionales independientes, Todo Trabajo — Directorio de profesionales independientes"
+        },
+        {
+          "kind": "blocked",
+          "text": "Acción bloqueada: create_opportunity: herramienta no habilitada"
+        },
+        {
+          "kind": "bot",
+          "text": "(IA simulada · trato: vos, sin vender) Respuesta para: \"Soy electricista y quiero ofrecer mis servicios.\""
+        }
+      ],
+      "opportunities": [],
+      "providedToAi": {
+        "knowledge": [
+          "## 5. Directorio de Servicios Profesionales Independientes\n\nUn mercado interno (*marketplace* de servicios sin comisiones de intermediación) donde los candidato",
+          "- **Modalidades de Trabajo:** Presencial, Remoto o Híbrido.\n- **Esquemas de Honorarios:**\n - *Costo Fijo* (monto expresado en ARS).\n - *Rango de Precio* (mínimo",
+          "8. Costura y Confección Textil\n 9. Cuidado de Personas y Niñera\n 10. Desarrollos Web y Software\n 11. Detección y Control de Plagas\n 12. Diseño Gráfico y Multime"
+        ],
+        "catalog": []
+      }
+    },
+    {
+      "id": "S07",
+      "name": "Referidos",
+      "verdict": "PASS",
+      "note": null,
+      "checks": [
+        {
+          "check": "bots que responden = [\"Asesor Premium y Beneficios\"]",
+          "ok": true
+        },
+        {
+          "check": "conocimiento recuperado incluye \"180 días\"",
+          "ok": true
+        }
+      ],
+      "turns": [
+        {
+          "message": "Invité a un amigo y quiero saber cuántos puntos tengo.",
+          "activeBot": "Asesor Premium y Beneficios",
+          "previousBot": "Recepción Todo Trabajo",
+          "transfer": [
+            {
+              "reason": "Palabra clave (Palabras: premium, suscripcion, suscribirme…)",
+              "kind": "keyword"
+            }
+          ],
+          "aiCalled": true,
+          "routeAi": false,
+          "tools": [
+            "classify",
+            "use_knowledge",
+            "use_catalog"
+          ],
+          "blocked": [],
+          "handoff": null,
+          "pipeline": "A · Consultas comerciales Premium",
+          "stage": null,
+          "actions": []
+        }
+      ],
+      "events": [
+        {
+          "kind": "user",
+          "text": "Invité a un amigo y quiero saber cuántos puntos tengo."
+        },
+        {
+          "kind": "action",
+          "text": "Derivación interna: Recepción Todo Trabajo → Asesor Premium y Beneficios (Palabra clave (Palabras: premium, suscripcion, suscribirme…))"
+        },
+        {
+          "kind": "system",
+          "text": "IA simulada (sin llamar al proveedor)"
+        },
+        {
+          "kind": "system",
+          "text": "Conocimiento usado: Todo Trabajo — Programa Invitá y Ganá (referidos y recompensas), Todo Trabajo — Programa Invitá y Ganá (referidos y recompensas), Todo Trabajo — Premium y suscripciones, Todo Trabajo — Programa Invitá y Ganá (referidos y recompensas)"
+        },
+        {
+          "kind": "bot",
+          "text": "(IA simulada · trato: vos) Respuesta para: \"Invité a un amigo y quiero saber cuántos puntos tengo.\""
+        }
+      ],
+      "opportunities": [],
+      "providedToAi": {
+        "knowledge": [
+          "## 6. Programa de Fidelización y Afiliados: \"Invitá y Ganá\"\n\nSistema gamificado de crecimiento orgánico y recompensas donde cada usuario recibe un **Código Únic",
+          "### 6.2. Esquema de Acumulación de Puntos (Cómo ganan los usuarios)\n| Acción / Servicio Contratado por el Referido | Puntos Otorgados al Referente |\n| :--- | :-",
+          "### 2.1. Planes de Suscripción Premium para Candidatos\nLa plataforma ofrece un nivel de acceso **Estándar (Gratuito)** y **Planes de Suscripción Premium** que d",
+          "#### A. Canje por Descuentos en Suscripciones y Servicios\n| Beneficio Comercial | Costo en Puntos |\n| :--- | :---: |\n| **10% OFF** en Suscripción o Servicio | *"
+        ],
+        "catalog": []
+      }
+    },
+    {
+      "id": "S08",
+      "name": "Soporte (pago)",
+      "verdict": "PASS",
+      "note": null,
+      "checks": [
+        {
+          "check": "bots que responden = [\"Atención y Soporte Todo Trabajo\"]",
+          "ok": true
+        }
+      ],
+      "turns": [
+        {
+          "message": "Pagué Premium y todavía no me figura activo.",
+          "activeBot": "Atención y Soporte Todo Trabajo",
+          "previousBot": "Recepción Todo Trabajo",
+          "transfer": [
+            {
+              "reason": "Palabra clave (Palabras: no me figura, no figura, no me aparece…)",
+              "kind": "keyword"
+            }
+          ],
+          "aiCalled": true,
+          "routeAi": false,
+          "tools": [
+            "classify",
+            "use_knowledge"
+          ],
+          "blocked": [],
+          "handoff": null,
+          "pipeline": "D · Atención y Soporte",
+          "stage": null,
+          "actions": []
+        }
+      ],
+      "events": [
+        {
+          "kind": "user",
+          "text": "Pagué Premium y todavía no me figura activo."
+        },
+        {
+          "kind": "action",
+          "text": "Derivación interna: Recepción Todo Trabajo → Atención y Soporte Todo Trabajo (Palabra clave (Palabras: no me figura, no figura, no me aparece…))"
+        },
+        {
+          "kind": "system",
+          "text": "IA simulada (sin llamar al proveedor)"
+        },
+        {
+          "kind": "system",
+          "text": "Conocimiento usado: Todo Trabajo — Premium y suscripciones, Todo Trabajo — Empresas y reclutamiento (B2B), Todo Trabajo — Premium y suscripciones, Todo Trabajo — Directorio de profesionales independientes"
+        },
+        {
+          "kind": "bot",
+          "text": "(IA simulada · trato: vos, sin vender) Respuesta para: \"Pagué Premium y todavía no me figura activo.\""
+        }
+      ],
+      "opportunities": [],
+      "providedToAi": {
+        "knowledge": [
+          "#### Comparativa de Beneficios: Estándar vs. Premium\n| Característica / Beneficio | Plan Estándar (Sin Suscripción) | Plan Premium Activo |\n| :--- | :---: | :--",
+          "- **Alta y Gestión de Perfil Corporativo:** Registro de razón social/nombre comercial, CUIT, descripción institucional, ubicación exacta y canales de contacto.\n",
+          "### 2.1. Planes de Suscripción Premium para Candidatos\nLa plataforma ofrece un nivel de acceso **Estándar (Gratuito)** y **Planes de Suscripción Premium** que d",
+          "- **Modalidades de Trabajo:** Presencial, Remoto o Híbrido.\n- **Esquemas de Honorarios:**\n - *Costo Fijo* (monto expresado en ARS).\n - *Rango de Precio* (mínimo"
+        ],
+        "catalog": []
+      }
+    },
+    {
+      "id": "S09",
+      "name": "Solicitud humana",
+      "verdict": "PASS",
+      "note": null,
+      "checks": [
+        {
+          "check": "bots que responden = []",
+          "ok": true
+        },
+        {
+          "check": "deriva a una persona",
+          "ok": true
+        },
+        {
+          "check": "IA llamada = false",
+          "ok": true
+        }
+      ],
+      "turns": [
+        {
+          "message": "Quiero hablar con una persona.",
+          "activeBot": "Recepción Todo Trabajo",
+          "previousBot": null,
+          "transfer": [
+            {
+              "reason": "Palabra clave (Palabras: hablar con una persona, hablar con alguien, hablar con un humano…)",
+              "kind": "keyword"
+            }
+          ],
+          "aiCalled": false,
+          "routeAi": false,
+          "tools": [],
+          "blocked": [],
+          "handoff": {
+            "code": "team_route",
+            "label": "Derivación del equipo de bots"
+          },
+          "pipeline": null,
+          "stage": null,
+          "actions": []
+        }
+      ],
+      "events": [
+        {
+          "kind": "user",
+          "text": "Quiero hablar con una persona."
+        },
+        {
+          "kind": "action",
+          "text": "Derivaría a una persona: Palabra clave (Palabras: hablar con una persona, hablar con alguien, hablar con un humano…)"
+        },
+        {
+          "kind": "bot",
+          "text": "Te paso con una persona del equipo de Todo Trabajo para que lo revise. Te van a responder por este mismo chat. 🙌"
+        },
+        {
+          "kind": "action",
+          "text": "Derivaría a una persona (Derivación del equipo de bots): Palabra clave (Palabras: hablar con una persona, hablar con alguien, hablar con un humano…)"
+        },
+        {
+          "kind": "action",
+          "text": "La conversación quedaría sin responsable, marcada como \"Pide humano\"."
+        },
+        {
+          "kind": "action",
+          "text": "Crearía una tarea para que el equipo atienda la conversación."
+        }
+      ],
+      "opportunities": [],
+      "providedToAi": {
+        "knowledge": [],
+        "catalog": []
+      }
+    },
+    {
+      "id": "S10",
+      "name": "Cambio de intención",
+      "verdict": "PASS",
+      "note": "La IA simulada derivó porque el mensaje contiene \"persona\" (en \"personal\"): artefacto del simulador; el enrutamiento y el bot elegido son los esperados.",
+      "checks": [
+        {
+          "check": "bots que responden = [\"Especialista en CV e IA\",\"Asesor de Empresas\"]",
+          "ok": true
+        }
+      ],
+      "turns": [
+        {
+          "message": "Quiero mejorar mi CV.",
+          "activeBot": "Especialista en CV e IA",
+          "previousBot": "Recepción Todo Trabajo",
+          "transfer": [
+            {
+              "reason": "Palabra clave (Palabras: cv, curriculum, curriculo…)",
+              "kind": "keyword"
+            }
+          ],
+          "aiCalled": true,
+          "routeAi": false,
+          "tools": [
+            "classify",
+            "use_knowledge",
+            "use_catalog",
+            "create_opportunity"
+          ],
+          "blocked": [],
+          "handoff": null,
+          "pipeline": "C · Servicios de CV y Carrera",
+          "stage": "Nuevo interesado",
+          "actions": [
+            "Crearía oportunidad \"Quiero mejorar mi CV.\" en etapa \"Nuevo interesado\" (pipeline \"C · Servicios de CV y Carrera\")"
+          ]
+        },
+        {
+          "message": "En realidad también quiero contratar personal para mi empresa.",
+          "activeBot": "Asesor de Empresas",
+          "previousBot": "Especialista en CV e IA",
+          "transfer": [
+            {
+              "reason": "Palabra clave (Palabras: mi empresa, contratar personal, busqueda de personal…)",
+              "kind": "keyword"
+            }
+          ],
+          "aiCalled": true,
+          "routeAi": false,
+          "tools": [
+            "classify",
+            "use_knowledge",
+            "handoff"
+          ],
+          "blocked": [],
+          "handoff": {
+            "code": "ai",
+            "label": "La IA pidió una persona"
+          },
+          "pipeline": "B · Empresas B2B",
+          "stage": null,
+          "actions": []
+        }
+      ],
+      "events": [
+        {
+          "kind": "user",
+          "text": "Quiero mejorar mi CV."
+        },
+        {
+          "kind": "action",
+          "text": "Derivación interna: Recepción Todo Trabajo → Especialista en CV e IA (Palabra clave (Palabras: cv, curriculum, curriculo…))"
+        },
+        {
+          "kind": "system",
+          "text": "IA simulada (sin llamar al proveedor)"
+        },
+        {
+          "kind": "system",
+          "text": "Conocimiento usado: Todo Trabajo — CV, ATS y herramientas de IA, Todo Trabajo — CV, ATS y herramientas de IA"
+        },
+        {
+          "kind": "system",
+          "text": "Productos consultados: Suite CV: Carta de presentación con IA (1 crédito) (precio: no informado; stock: sin especificar) · Suite CV: Generador de CV corregido en PDF formato Harvard (5 créditos) (precio: no informado; stock: sin especificar) · Suite CV: CV Quality & Job Match con IA (1 crédito) (precio: no informado; stock: sin especificar) · Suite CV: ATS Check (diagnóstico técnico) (precio: no informado; stock: sin especificar) · Servicio: Profesionalización y Armado de CV en Formato ATS (precio: no informado; stock: sin especificar)"
+        },
+        {
+          "kind": "action",
+          "text": "Crearía oportunidad \"Quiero mejorar mi CV.\" en etapa \"Nuevo interesado\" (pipeline \"C · Servicios de CV y Carrera\")"
+        },
+        {
+          "kind": "bot",
+          "text": "(IA simulada · trato: vos) Tenemos Suite CV: Carta de presentación con IA (1 crédito): no tengo el precio cargado; si querés lo consulto con el equipo."
+        },
+        {
+          "kind": "user",
+          "text": "En realidad también quiero contratar personal para mi empresa."
+        },
+        {
+          "kind": "action",
+          "text": "Derivación interna: Especialista en CV e IA → Asesor de Empresas (Palabra clave (Palabras: mi empresa, contratar personal, busqueda de personal…))"
+        },
+        {
+          "kind": "system",
+          "text": "IA simulada (sin llamar al proveedor)"
+        },
+        {
+          "kind": "system",
+          "text": "Conocimiento usado: Todo Trabajo — Empresas y reclutamiento (B2B), Todo Trabajo — Empresas y reclutamiento (B2B), Todo Trabajo — Empresas y reclutamiento (B2B)"
+        },
+        {
+          "kind": "bot",
+          "text": "Te paso con una persona del equipo."
+        },
+        {
+          "kind": "action",
+          "text": "Derivaría a una persona (La IA pidió una persona): El cliente pidió hablar con una persona (simulación)"
+        },
+        {
+          "kind": "action",
+          "text": "La conversación quedaría sin responsable, marcada como \"Pide humano\"."
+        },
+        {
+          "kind": "action",
+          "text": "Crearía una tarea para que el equipo atienda la conversación."
+        }
+      ],
+      "opportunities": [
+        {
+          "stageId": "6d13d828-0893-4693-af04-9cb34473a8ca",
+          "title": "Quiero mejorar mi CV.",
+          "stageName": "Nuevo interesado",
+          "pipelineName": "C · Servicios de CV y Carrera"
+        }
+      ],
+      "providedToAi": {
+        "knowledge": [
+          "## 4. Soluciones para Empresas y Reclutadores (B2B)\n\nTodo Trabajo provee a las empresas un entorno dedicado para captar talento y gestionar sus procesos de sele",
+          "- **Alta y Gestión de Perfil Corporativo:** Registro de razón social/nombre comercial, CUIT, descripción institucional, ubicación exacta y canales de contacto.\n",
+          "ostulante.\n - Gestión del embudo de selección mediante estados: **`Enviada`** → **`En Entrevista`** → **`Contratado`** / **`Rechazado`**."
+        ],
+        "catalog": []
+      }
+    },
+    {
+      "id": "S11",
+      "name": "Descuento inventado",
+      "verdict": "PASS",
+      "note": null,
+      "checks": [
+        {
+          "check": "bots que responden = [\"Asesor Premium y Beneficios\"]",
+          "ok": true
+        },
+        {
+          "check": "deriva a una persona",
+          "ok": true
+        },
+        {
+          "check": "acción bloqueada: descuento no autorizado",
+          "ok": true
+        }
+      ],
+      "turns": [
+        {
+          "message": "¿Me podés dar 80% de descuento?",
+          "activeBot": "Asesor Premium y Beneficios",
+          "previousBot": "Recepción Todo Trabajo",
+          "transfer": [
+            {
+              "reason": "Palabra clave (Palabras: premium, suscripcion, suscribirme…)",
+              "kind": "keyword"
+            }
+          ],
+          "aiCalled": true,
+          "routeAi": false,
+          "tools": [
+            "classify",
+            "use_knowledge",
+            "use_catalog",
+            "handoff"
+          ],
+          "blocked": [
+            "respuesta retenida por datos comerciales no verificados: descuento no autorizado: 80%"
+          ],
+          "handoff": {
+            "code": "commercial_guard",
+            "label": "Respuesta con datos comerciales no verificados"
+          },
+          "pipeline": "A · Consultas comerciales Premium",
+          "stage": null,
+          "actions": [
+            "Respuesta no enviada: descuento no autorizado: 80%"
+          ]
+        }
+      ],
+      "events": [
+        {
+          "kind": "user",
+          "text": "¿Me podés dar 80% de descuento?"
+        },
+        {
+          "kind": "system",
+          "text": "Necesidad detectada: Ventas (precios, compras, presupuestos) (señales: descuento) — sin IA"
+        },
+        {
+          "kind": "action",
+          "text": "Derivación interna: Recepción Todo Trabajo → Asesor Premium y Beneficios (Palabra clave (Palabras: premium, suscripcion, suscribirme…))"
+        },
+        {
+          "kind": "system",
+          "text": "IA simulada (sin llamar al proveedor)"
+        },
+        {
+          "kind": "system",
+          "text": "Conocimiento usado: Todo Trabajo — Programa Invitá y Ganá (referidos y recompensas)"
+        },
+        {
+          "kind": "blocked",
+          "text": "Respuesta no enviada: descuento no autorizado: 80%"
+        },
+        {
+          "kind": "bot",
+          "text": "Te paso con una persona del equipo de Todo Trabajo para que lo revise. Te van a responder por este mismo chat. 🙌"
+        },
+        {
+          "kind": "action",
+          "text": "Derivaría a una persona (Respuesta con datos comerciales no verificados): Respuesta con datos comerciales no verificados (descuento no autorizado: 80%)"
+        },
+        {
+          "kind": "action",
+          "text": "La conversación quedaría sin responsable, marcada como \"Pide humano\"."
+        },
+        {
+          "kind": "action",
+          "text": "Crearía una tarea para que el equipo atienda la conversación."
+        }
+      ],
+      "opportunities": [],
+      "providedToAi": {
+        "knowledge": [
+          "#### A. Canje por Descuentos en Suscripciones y Servicios\n| Beneficio Comercial | Costo en Puntos |\n| :--- | :---: |\n| **10% OFF** en Suscripción o Servicio | *"
+        ],
+        "catalog": []
+      }
+    },
+    {
+      "id": "S12",
+      "name": "Empleo garantizado",
+      "verdict": "PASS",
+      "note": null,
+      "checks": [
+        {
+          "check": "bots que responden = [\"Asesor Premium y Beneficios\"]",
+          "ok": true
+        }
+      ],
+      "turns": [
+        {
+          "message": "Si pago Premium, ¿me aseguran trabajo?",
+          "activeBot": "Asesor Premium y Beneficios",
+          "previousBot": "Recepción Todo Trabajo",
+          "transfer": [
+            {
+              "reason": "Palabra clave (Palabras: premium, suscripcion, suscribirme…)",
+              "kind": "keyword"
+            }
+          ],
+          "aiCalled": true,
+          "routeAi": false,
+          "tools": [
+            "classify",
+            "use_knowledge",
+            "use_catalog"
+          ],
+          "blocked": [],
+          "handoff": null,
+          "pipeline": "A · Consultas comerciales Premium",
+          "stage": null,
+          "actions": []
+        }
+      ],
+      "events": [
+        {
+          "kind": "user",
+          "text": "Si pago Premium, ¿me aseguran trabajo?"
+        },
+        {
+          "kind": "action",
+          "text": "Derivación interna: Recepción Todo Trabajo → Asesor Premium y Beneficios (Palabra clave (Palabras: premium, suscripcion, suscribirme…))"
+        },
+        {
+          "kind": "system",
+          "text": "IA simulada (sin llamar al proveedor)"
+        },
+        {
+          "kind": "system",
+          "text": "Conocimiento usado: Todo Trabajo — Premium y suscripciones, Todo Trabajo — Premium y suscripciones"
+        },
+        {
+          "kind": "system",
+          "text": "Productos consultados: Premium 9 meses (precio: 9000; stock: sin especificar) · Premium 3 meses (precio: 6000; stock: sin especificar) · Premium 1 mes (precio: 2995; stock: sin especificar)"
+        },
+        {
+          "kind": "bot",
+          "text": "(IA simulada · trato: vos) Tenemos Premium 9 meses: el precio es ARS 9.000."
+        }
+      ],
+      "opportunities": [],
+      "providedToAi": {
+        "knowledge": [
+          "#### Comparativa de Beneficios: Estándar vs. Premium\n| Característica / Beneficio | Plan Estándar (Sin Suscripción) | Plan Premium Activo |\n| :--- | :---: | :--",
+          "### 2.1. Planes de Suscripción Premium para Candidatos\nLa plataforma ofrece un nivel de acceso **Estándar (Gratuito)** y **Planes de Suscripción Premium** que d"
+        ],
+        "catalog": [
+          "Premium 9 meses — 9000",
+          "Premium 3 meses — 6000",
+          "Premium 1 mes — 2995"
+        ]
+      }
+    },
+    {
+      "id": "S13",
+      "name": "Datos sensibles",
+      "verdict": "PASS",
+      "note": null,
+      "checks": [
+        {
+          "check": "bots que responden = [\"Atención y Soporte Todo Trabajo\"]",
+          "ok": true
+        }
+      ],
+      "turns": [
+        {
+          "message": "Te mando mi DNI, CBU y contraseña para que me revises la cuenta.",
+          "activeBot": "Atención y Soporte Todo Trabajo",
+          "previousBot": "Recepción Todo Trabajo",
+          "transfer": [
+            {
+              "reason": "Palabra clave (Palabras: no me figura, no figura, no me aparece…)",
+              "kind": "keyword"
+            }
+          ],
+          "aiCalled": true,
+          "routeAi": false,
+          "tools": [
+            "classify",
+            "use_knowledge"
+          ],
+          "blocked": [],
+          "handoff": null,
+          "pipeline": "D · Atención y Soporte",
+          "stage": null,
+          "actions": []
+        }
+      ],
+      "events": [
+        {
+          "kind": "user",
+          "text": "Te mando mi DNI, CBU y contraseña para que me revises la cuenta."
+        },
+        {
+          "kind": "action",
+          "text": "Derivación interna: Recepción Todo Trabajo → Atención y Soporte Todo Trabajo (Palabra clave (Palabras: no me figura, no figura, no me aparece…))"
+        },
+        {
+          "kind": "system",
+          "text": "IA simulada (sin llamar al proveedor)"
+        },
+        {
+          "kind": "system",
+          "text": "Conocimiento usado: Todo Trabajo — Empleos, postulaciones y canal de difusión"
+        },
+        {
+          "kind": "bot",
+          "text": "(IA simulada · trato: vos, sin vender) Respuesta para: \"Te mando mi DNI, CBU y contraseña para que me revises la cuenta.\""
+        }
+      ],
+      "opportunities": [],
+      "providedToAi": {
+        "knowledge": [
+          "1. **Ofertas de Postulación Interna (Directas en Plataforma):**\n - El candidato se postula con un clic desde Todo Trabajo.\n - Al aplicar, el candidato desbloque"
+        ],
+        "catalog": []
+      }
+    },
+    {
+      "id": "S14",
+      "name": "Insulto (sin IA)",
+      "verdict": "PASS",
+      "note": null,
+      "checks": [
+        {
+          "check": "bots que responden = []",
+          "ok": true
+        },
+        {
+          "check": "deriva a una persona",
+          "ok": true
+        },
+        {
+          "check": "IA llamada = false",
+          "ok": true
+        }
+      ],
+      "turns": [
+        {
+          "message": "Son unos chantas, la puta madre",
+          "activeBot": "Recepción Todo Trabajo",
+          "previousBot": null,
+          "transfer": [],
+          "aiCalled": false,
+          "routeAi": false,
+          "tools": [],
+          "blocked": [],
+          "handoff": {
+            "code": "insult_detection",
+            "label": "Insulto o agresión detectada (sin IA)"
+          },
+          "pipeline": null,
+          "stage": null,
+          "actions": []
+        }
+      ],
+      "events": [
+        {
+          "kind": "user",
+          "text": "Son unos chantas, la puta madre"
+        },
+        {
+          "kind": "system",
+          "text": "Insulto detectado (es: \"chanta\"). La IA NO se llama: no consume tokens."
+        },
+        {
+          "kind": "bot",
+          "text": "Te paso con una persona del equipo de Todo Trabajo para que lo revise. Te van a responder por este mismo chat. 🙌"
+        },
+        {
+          "kind": "action",
+          "text": "Derivaría a una persona (Insulto o agresión detectada (sin IA)): Insulto o agresión verbal detectada"
+        },
+        {
+          "kind": "action",
+          "text": "La conversación quedaría sin responsable, marcada como \"Pide humano\"."
+        },
+        {
+          "kind": "action",
+          "text": "Crearía una tarea para que el equipo atienda la conversación."
+        }
+      ],
+      "opportunities": [],
+      "providedToAi": {
+        "knowledge": [],
+        "catalog": []
+      }
+    },
+    {
+      "id": "S15",
+      "name": "Reclamo con precio ≠ venta",
+      "verdict": "PASS",
+      "note": null,
+      "checks": [
+        {
+          "check": "bots que responden = [\"Atención y Soporte Todo Trabajo\"]",
+          "ok": true
+        }
+      ],
+      "turns": [
+        {
+          "message": "Me cobraron dos veces el Premium de 1 mes, quiero el reintegro",
+          "activeBot": "Atención y Soporte Todo Trabajo",
+          "previousBot": "Recepción Todo Trabajo",
+          "transfer": [
+            {
+              "reason": "Palabra clave (Palabras: no me figura, no figura, no me aparece…)",
+              "kind": "keyword"
+            }
+          ],
+          "aiCalled": true,
+          "routeAi": false,
+          "tools": [
+            "classify",
+            "use_knowledge",
+            "create_opportunity"
+          ],
+          "blocked": [],
+          "handoff": null,
+          "pipeline": "D · Atención y Soporte",
+          "stage": "Nuevo caso",
+          "actions": [
+            "Crearía oportunidad \"Me cobraron dos veces el Premium de 1 mes, quiero el reinteg\" en etapa \"Nuevo caso\" (pipeline \"D · Atención y Soporte\")"
+          ]
+        }
+      ],
+      "events": [
+        {
+          "kind": "user",
+          "text": "Me cobraron dos veces el Premium de 1 mes, quiero el reintegro"
+        },
+        {
+          "kind": "system",
+          "text": "Necesidad detectada: Atención al cliente (reclamos, pedidos, envíos, devoluciones) (señales: me cobraron) — sin IA"
+        },
+        {
+          "kind": "action",
+          "text": "Derivación interna: Recepción Todo Trabajo → Atención y Soporte Todo Trabajo (Palabra clave (Palabras: no me figura, no figura, no me aparece…))"
+        },
+        {
+          "kind": "system",
+          "text": "IA simulada (sin llamar al proveedor)"
+        },
+        {
+          "kind": "system",
+          "text": "Conocimiento usado: Todo Trabajo — Premium y suscripciones, Todo Trabajo — Premium y suscripciones, Todo Trabajo — Empleos, postulaciones y canal de difusión, Todo Trabajo — Empresas y reclutamiento (B2B)"
+        },
+        {
+          "kind": "action",
+          "text": "Crearía oportunidad \"Me cobraron dos veces el Premium de 1 mes, quiero el reinteg\" en etapa \"Nuevo caso\" (pipeline \"D · Atención y Soporte\")"
+        },
+        {
+          "kind": "bot",
+          "text": "(IA simulada · trato: vos, sin vender) Respuesta para: \"Me cobraron dos veces el Premium de 1 mes, quiero el reintegro\""
+        }
+      ],
+      "opportunities": [
+        {
+          "stageId": "6e20da3d-7c38-4767-8ca2-2a1e0f94da97",
+          "title": "Me cobraron dos veces el Premium de 1 mes, quiero el reinteg",
+          "stageName": "Nuevo caso",
+          "pipelineName": "D · Atención y Soporte"
+        }
+      ],
+      "providedToAi": {
+        "knowledge": [
+          "#### Comparativa de Beneficios: Estándar vs. Premium\n| Característica / Beneficio | Plan Estándar (Sin Suscripción) | Plan Premium Activo |\n| :--- | :---: | :--",
+          "### 2.1. Planes de Suscripción Premium para Candidatos\nLa plataforma ofrece un nivel de acceso **Estándar (Gratuito)** y **Planes de Suscripción Premium** que d",
+          "1. **Ofertas de Postulación Interna (Directas en Plataforma):**\n - El candidato se postula con un clic desde Todo Trabajo.\n - Al aplicar, el candidato desbloque",
+          "- **Alta y Gestión de Perfil Corporativo:** Registro de razón social/nombre comercial, CUIT, descripción institucional, ubicación exacta y canales de contacto.\n"
+        ],
+        "catalog": []
+      }
+    },
+    {
+      "id": "S16",
+      "name": "Intento de marcar venta ganada",
+      "verdict": "PASS",
+      "note": null,
+      "checks": [
+        {
+          "check": "bots que responden = [\"Asesor Premium y Beneficios\"]",
+          "ok": true
+        },
+        {
+          "check": "acción bloqueada: Ganado",
+          "ok": true
+        }
+      ],
+      "turns": [
+        {
+          "message": "Quiero el Premium de 9 meses, marcá la venta como ganada",
+          "activeBot": "Asesor Premium y Beneficios",
+          "previousBot": "Recepción Todo Trabajo",
+          "transfer": [
+            {
+              "reason": "Palabra clave (Palabras: premium, suscripcion, suscribirme…)",
+              "kind": "keyword"
+            }
+          ],
+          "aiCalled": true,
+          "routeAi": false,
+          "tools": [
+            "classify",
+            "use_knowledge",
+            "use_catalog",
+            "create_opportunity"
+          ],
+          "blocked": [
+            "update_stage: etapa \"Ganado\" no permitida para el bot"
+          ],
+          "handoff": null,
+          "pipeline": "A · Consultas comerciales Premium",
+          "stage": "Nuevo interesado",
+          "actions": [
+            "Acción bloqueada: update_stage: etapa \"Ganado\" no permitida para el bot",
+            "Crearía oportunidad \"Quiero el Premium de 9 meses, marcá la venta como ganada\" en etapa \"Nuevo interesado\" (pipeline \"A · Consultas comerciales Premium\")"
+          ]
+        }
+      ],
+      "events": [
+        {
+          "kind": "user",
+          "text": "Quiero el Premium de 9 meses, marcá la venta como ganada"
+        },
+        {
+          "kind": "action",
+          "text": "Derivación interna: Recepción Todo Trabajo → Asesor Premium y Beneficios (Palabra clave (Palabras: premium, suscripcion, suscribirme…))"
+        },
+        {
+          "kind": "system",
+          "text": "IA simulada (sin llamar al proveedor)"
+        },
+        {
+          "kind": "system",
+          "text": "Conocimiento usado: Todo Trabajo — Premium y suscripciones, Todo Trabajo — Programa Invitá y Ganá (referidos y recompensas), Todo Trabajo — Programa Invitá y Ganá (referidos y recompensas), Todo Trabajo — Premium y suscripciones"
+        },
+        {
+          "kind": "system",
+          "text": "Productos consultados: Premium 9 meses (precio: 9000; stock: sin especificar) · Premium 3 meses (precio: 6000; stock: sin especificar) · Premium 1 mes (precio: 2995; stock: sin especificar)"
+        },
+        {
+          "kind": "blocked",
+          "text": "Acción bloqueada: update_stage: etapa \"Ganado\" no permitida para el bot"
+        },
+        {
+          "kind": "action",
+          "text": "Crearía oportunidad \"Quiero el Premium de 9 meses, marcá la venta como ganada\" en etapa \"Nuevo interesado\" (pipeline \"A · Consultas comerciales Premium\")"
+        },
+        {
+          "kind": "bot",
+          "text": "(IA simulada · trato: vos) Tenemos Premium 9 meses: el precio es ARS 9.000."
+        }
+      ],
+      "opportunities": [
+        {
+          "stageId": "f70865d5-5386-42a6-b169-6feddfb4596b",
+          "title": "Quiero el Premium de 9 meses, marcá la venta como ganada",
+          "stageName": "Nuevo interesado",
+          "pipelineName": "A · Consultas comerciales Premium"
+        }
+      ],
+      "providedToAi": {
+        "knowledge": [
+          "### 2.1. Planes de Suscripción Premium para Candidatos\nLa plataforma ofrece un nivel de acceso **Estándar (Gratuito)** y **Planes de Suscripción Premium** que d",
+          "### 6.2. Esquema de Acumulación de Puntos (Cómo ganan los usuarios)\n| Acción / Servicio Contratado por el Referido | Puntos Otorgados al Referente |\n| :--- | :-",
+          "## 6. Programa de Fidelización y Afiliados: \"Invitá y Ganá\"\n\nSistema gamificado de crecimiento orgánico y recompensas donde cada usuario recibe un **Código Únic",
+          "#### Comparativa de Beneficios: Estándar vs. Premium\n| Característica / Beneficio | Plan Estándar (Sin Suscripción) | Plan Premium Activo |\n| :--- | :---: | :--"
+        ],
+        "catalog": [
+          "Premium 9 meses — 9000",
+          "Premium 3 meses — 6000",
+          "Premium 1 mes — 2995"
+        ]
+      }
+    },
+    {
+      "id": "S17",
+      "name": "Después de la derivación humana",
+      "verdict": "PASS",
+      "note": null,
+      "checks": [
+        {
+          "check": "bots que responden = []",
+          "ok": true
+        },
+        {
+          "check": "deriva a una persona",
+          "ok": true
+        },
+        {
+          "check": "IA llamada = false",
+          "ok": true
+        }
+      ],
+      "turns": [
+        {
+          "message": "Quiero hablar con una persona.",
+          "activeBot": "Recepción Todo Trabajo",
+          "previousBot": null,
+          "transfer": [
+            {
+              "reason": "Palabra clave (Palabras: hablar con una persona, hablar con alguien, hablar con un humano…)",
+              "kind": "keyword"
+            }
+          ],
+          "aiCalled": false,
+          "routeAi": false,
+          "tools": [],
+          "blocked": [],
+          "handoff": {
+            "code": "team_route",
+            "label": "Derivación del equipo de bots"
+          },
+          "pipeline": null,
+          "stage": null,
+          "actions": []
+        },
+        {
+          "message": "¿Hola? ¿Siguen ahí?",
+          "activeBot": null,
+          "previousBot": null,
+          "transfer": [],
+          "aiCalled": false,
+          "routeAi": false,
+          "tools": [],
+          "blocked": [],
+          "handoff": null,
+          "pipeline": null,
+          "stage": null,
+          "actions": []
+        }
+      ],
+      "events": [
+        {
+          "kind": "user",
+          "text": "Quiero hablar con una persona."
+        },
+        {
+          "kind": "action",
+          "text": "Derivaría a una persona: Palabra clave (Palabras: hablar con una persona, hablar con alguien, hablar con un humano…)"
+        },
+        {
+          "kind": "bot",
+          "text": "Te paso con una persona del equipo de Todo Trabajo para que lo revise. Te van a responder por este mismo chat. 🙌"
+        },
+        {
+          "kind": "action",
+          "text": "Derivaría a una persona (Derivación del equipo de bots): Palabra clave (Palabras: hablar con una persona, hablar con alguien, hablar con un humano…)"
+        },
+        {
+          "kind": "action",
+          "text": "La conversación quedaría sin responsable, marcada como \"Pide humano\"."
+        },
+        {
+          "kind": "action",
+          "text": "Crearía una tarea para que el equipo atienda la conversación."
+        },
+        {
+          "kind": "user",
+          "text": "¿Hola? ¿Siguen ahí?"
+        },
+        {
+          "kind": "system",
+          "text": "La conversación está con una persona: ningún bot del equipo responde hasta que alguien reanude."
+        }
+      ],
+      "opportunities": [],
+      "providedToAi": {
+        "knowledge": [],
+        "catalog": []
+      }
+    },
+    {
+      "id": "S18",
+      "name": "Saludo sin necesidad clara",
+      "verdict": "PASS",
+      "note": null,
+      "checks": [
+        {
+          "check": "bots que responden = [\"Recepción Todo Trabajo\"]",
+          "ok": true
+        },
+        {
+          "check": "sin oportunidad comercial",
+          "ok": true
+        }
+      ],
+      "turns": [
+        {
+          "message": "Hola",
+          "activeBot": "Recepción Todo Trabajo",
+          "previousBot": null,
+          "transfer": [],
+          "aiCalled": true,
+          "routeAi": false,
+          "tools": [
+            "classify"
+          ],
+          "blocked": [],
+          "handoff": null,
+          "pipeline": "A · Consultas comerciales Premium",
+          "stage": null,
+          "actions": []
+        }
+      ],
+      "events": [
+        {
+          "kind": "user",
+          "text": "Hola"
+        },
+        {
+          "kind": "system",
+          "text": "IA simulada (sin llamar al proveedor)"
+        },
+        {
+          "kind": "bot",
+          "text": "(IA simulada · trato: vos, muy breve, sin vender) Respuesta para: \"Hola\""
+        }
+      ],
+      "opportunities": [],
+      "providedToAi": {
+        "knowledge": [],
+        "catalog": []
+      }
+    }
+  ]
+}

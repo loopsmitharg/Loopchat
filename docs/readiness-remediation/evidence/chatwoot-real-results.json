@@ -1,18 +1,18 @@
 {
-  "generatedAt": "2026-11-05T04:20:03.070Z",
+  "generatedAt": "2026-11-22T00:35:25.114Z",
   "chatwoot": "http://localhost:3001",
   "scope": "Chatwoot CE real con bandeja API (sin Meta)",
   "results": [
     {
       "id": "R0",
       "check": "Versión de Chatwoot",
-      "obtained": "{\"version\":\"4.19.0\",\"timestamp\":\"2026-11-05 04:19:47\",\"queue_services\":\"ok\",\"data_services\":\"ok\"}",
+      "obtained": "{\"version\":\"4.19.0\",\"timestamp\":\"2026-11-22 00:35:09\",\"queue_services\":\"ok\",\"data_services\":\"ok\"}",
       "verdict": "PASS"
     },
     {
       "id": "R1",
       "check": "Aprovisionamiento por Platform API: cuenta, usuario de servicio y webhook con secreto",
-      "obtained": "cuenta=5; webhooks=[\"http://host.docker.internal:3013/api/webhooks/chatwoot/NiMPMBdWImfMiRCWz-Ot07-KMxWAcZzf\"]; secreto guardado=true",
+      "obtained": "cuenta=1; webhooks=[\"https://coordinates-acquisitions-msg-mai.trycloudflare.com/api/webhooks/chatwoot/kZb0DiuLjYQ8md0INMWMglr18HokycJC\"]; secreto guardado=true",
       "verdict": "PASS"
     },
     {
@@ -24,7 +24,7 @@
     {
       "id": "R3",
       "check": "Respuesta automática del bot publicada en Chatwoot por la API real",
-      "obtained": "respondió=true; latencia ≈ 1021 ms (incluye polling del test)",
+      "obtained": "respondió=true; latencia ≈ 2045 ms (incluye polling del test)",
       "verdict": "PASS"
     },
     {
@@ -54,13 +54,13 @@
     {
       "id": "R8",
       "check": "Sin ejecuciones colgadas",
-      "obtained": "completed,handed_off",
+      "obtained": "cancelled,completed,handed_off",
       "verdict": "PASS"
     },
     {
       "id": "R9",
       "check": "Carga con Chatwoot real: 24 mensajes simultáneos en 4 empresas, respuesta del bot publicada en Chatwoot",
-      "obtained": "respondidas=24/24; total=6367 ms; mensaje→respuesta p50=5930 ms p95=6322 ms máx=6363 ms (incluye polling del test ~1 s)",
+      "obtained": "respondidas=24/24; total=5408 ms; mensaje→respuesta p50=5048 ms p95=5370 ms máx=5405 ms (incluye polling del test ~1 s)",
       "verdict": "PASS"
     }
   ]
