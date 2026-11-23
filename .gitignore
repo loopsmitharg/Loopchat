@@ -49,3 +49,8 @@ next-env.d.ts
 /.taste-skill
 /.next-e2e
 /storage-e2e
+
+# Locally installed agent skills (npx skills add)
+.agents/
+.claude/skills/
+skills-lock.json

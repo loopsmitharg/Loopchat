@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Artefactos locales de Loopchat
     ".next-e2e/**",
+    // Proyecto de video aislado (Remotion), con su propio lint
+    "marketing/**",
     "playwright-report/**",
     "test-results/**",
     "storage/**",
