@@ -54,3 +54,7 @@ next-env.d.ts
 .agents/
 .claude/skills/
 skills-lock.json
+
+# Material local (no va al repo)
+/marketing/
+/docs/plan-implementacion-online.md
