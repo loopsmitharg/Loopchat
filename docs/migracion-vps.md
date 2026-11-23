@@ -1,0 +1,135 @@
+# Migración PC → VPS (Loopchat + Chatwoot + Todo Trabajo)
+
+Mudanza **completa y conjunta** del entorno local que funciona hoy (Todo Trabajo, 7 bots, equipo multiagente, IA real,
+dos números de WhatsApp) a un VPS. No se reconstruye nada: se restauran las dos bases juntas con los **mismos secretos**.
+
+> Por qué juntas: Loopchat guarda los IDs de cuenta/inbox de Chatwoot y Chatwoot guarda los tokens de Meta y la Platform App.
+> Restaurar una sola deja referencias rotas. Por qué los mismos secretos: las credenciales de IA/Meta/Chatwoot están cifradas
+> con `LOOPCHAT_ENCRYPTION_KEYS` (Loopchat) y `ACTIVE_RECORD_ENCRYPTION_*` (Chatwoot); con otras claves no se pueden leer.
+
+Herramientas (en el repo):
+
+| Paso | Archivo |
+|---|---|
+| Exportar y cortar en la PC | `scripts/migration/export-local.ps1` |
+| Importar y verificar en el VPS | `scripts/migration/import-vps.sh` |
+| Conteos de integridad | `scripts/migration/loopchat-counts.sql`, `chatwoot-counts.sql` |
+| Variables de producción | `infra/loopchat/env.production.example`, `infra/chatwoot/chatwoot.env.example` |
+| Proxy TLS con dominios por variable | `infra/caddy/Caddyfile`, `infra/caddy/caddy-env.conf` |
+
+## Checklist del VPS (en orden)
+
+**A. Lo que aportan ustedes**
+- [ ] VPS Ubuntu 24.04, 6 vCPU / 12 GB / ≥ 120 GB SSD, acceso SSH con clave.
+- [ ] Dominio confirmado → `APP_DOMAIN` y `CHATWOOT_DOMAIN` (p. ej. `app.loop-smith.com`, `chatwoot.loop-smith.com`).
+- [ ] Cloudflare: registros A (proxied) y un *Origin Certificate* para ambos dominios; SSL/TLS en **Full (strict)**.
+- [ ] Resend: dominio de envío verificado (SPF/DKIM en Cloudflare), **una API key** con permiso de envío y el remitente (`no-reply@…`).
+- [ ] Destino de alertas: `ALERT_EMAIL` y/o `ALERT_WEBHOOK_URL`.
+- [ ] Bucket externo para backups (R2 o B2) + credenciales de `rclone`; par de claves RSA de backup (la privada fuera del servidor).
+- [ ] Gestor de secretos con: `.env` local, `infra/chatwoot/.env` local, API key de Resend, claves de backup.
+- [ ] Email real de quien será superadmin y del admin de Todo Trabajo (hoy son cuentas de prueba).
+
+**B. Servidor**
+```bash
+adduser deploy && usermod -aG sudo deploy        # + copiar authorized_keys; PermitRootLogin no; PasswordAuthentication no
+sudo apt update && sudo apt -y upgrade && sudo apt -y install unattended-upgrades fail2ban curl
+sudo ufw allow OpenSSH && sudo ufw allow 80,443/tcp && sudo ufw enable
+# Docker Engine + compose plugin y Caddy: desde sus repositorios oficiales
+sudo mkdir -p /opt/loopchat /etc/loopchat /var/backups/loopchat && sudo chown deploy: /opt/loopchat
+git clone https://github.com/loopsmitharg/Loopchat.git /opt/loopchat && cd /opt/loopchat && git checkout <commit/tag que corre en la PC>
+```
+
+**C. Proxy y dominios**
+```bash
+sudo cp infra/caddy/Caddyfile /etc/caddy/Caddyfile
+sudo install -m 600 cf-origin.pem cf-origin.key /etc/caddy/ && sudo chown caddy: /etc/caddy/cf-origin.*
+printf 'APP_DOMAIN=app.loop-smith.com\nCHATWOOT_DOMAIN=chatwoot.loop-smith.com\n' | sudo tee /etc/caddy/caddy.env
+sudo mkdir -p /etc/systemd/system/caddy.service.d && sudo cp infra/caddy/caddy-env.conf /etc/systemd/system/caddy.service.d/env.conf
+sudo systemctl daemon-reload && sudo caddy validate --config /etc/caddy/Caddyfile && sudo systemctl restart caddy
+```
+
+**D. Variables** (sección 0 abajo): `.env.production` desde `infra/loopchat/env.production.example` e `infra/chatwoot/.env` desde
+la copia local + SMTP de Resend. `chmod 600` a ambos.
+
+**E. Corte y migración:** sección 1 (export en la PC → `scp` → `import-vps.sh` → validación → webhook de Meta → prueba real).
+
+**F. Después del corte**
+- [ ] `/admin`: crear tu superadmin real (`npm run bootstrap:admin`, ver `docs/deployment.md`) y borrar `plataforma@demo.loopchat.test`.
+- [ ] Borrar las empresas `DEMO Ferretería Norte` y `DEMO Óptica Sur` (sus cuentas de Chatwoot son del simulador y el worker registra `Invalid Access Token` cada vez que intenta sincronizarlas).
+- [ ] Todo Trabajo: invitar al admin con email real; quitar `admin@todotrabajo.localhost`; borrar la conexión *Simulador de IA local*.
+- [ ] Probar un reset de contraseña real (prueba de Resend en producción).
+- [ ] Backups: `docs/operations.md` § Backups (timer + restore de prueba).
+- [ ] Checklist de validación de `docs/qa-final.md`.
+
+## 0. Antes del día del corte (sin impacto)
+
+1. VPS listo (Docker, Caddy, firewall), repo clonado en `/opt/loopchat` en el **mismo commit** que corre en la PC.
+2. DNS y certificado de origen listos; `https://<APP_DOMAIN>` y `https://<CHATWOOT_DOMAIN>` resuelven al VPS (aunque den 502).
+3. `/opt/loopchat/.env.production` desde `infra/loopchat/env.production.example`:
+   - `BETTER_AUTH_SECRET`, `LOOPCHAT_ENCRYPTION_KEYS`, `CHATWOOT_PLATFORM_TOKEN`: **copiados del `.env` de la PC**.
+   - dominios nuevos, `LOOPCHAT_DB_PASSWORD` nueva, `SMTP_URL`/`MAIL_FROM` de Resend.
+4. `/opt/loopchat/infra/chatwoot/.env`: **copia del `infra/chatwoot/.env` de la PC**, cambiando solo `FRONTEND_URL=https://<CHATWOOT_DOMAIN>`
+   y agregando el bloque SMTP de Resend. `SECRET_KEY_BASE` y las tres `ACTIVE_RECORD_ENCRYPTION_*` **no se cambian**.
+5. `chmod 600` a los dos `.env`. Los secretos viajan por el gestor de secretos (nunca por mail/chat ni dentro del paquete).
+6. Ensayo opcional: correr el import en el VPS con un paquete de prueba y luego `docker compose … down -v` (solo en el VPS, antes del corte real).
+
+## 1. Corte (ventana: ~30 min sin bots)
+
+Orden pensado para que **nunca respondan la PC y el VPS a la vez**: Meta manda cada mensaje a una sola URL de webhook, y
+la PC queda apagada y bloqueada antes de que el VPS arranque.
+
+1. **PC — exportar y cortar:**
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File scripts\migration\export-local.ps1
+   ```
+   Detiene web, worker, túneles y Chatwoot; vuelca las bases y archivos a `storage\migration\<fecha>`; escribe
+   `storage\run\MIGRATED_TO_VPS` (desde ahí `dev-start.ps1` se niega a arrancar). Los mensajes que entren ahora fallan en el
+   túnel caído y **Meta los reintenta** (hasta ~7 días), así que no se pierden: llegan al VPS cuando se cambie el webhook.
+2. **Copiar el paquete** (contiene datos de clientes: solo por SSH):
+   ```powershell
+   scp -r storage\migration\<fecha> deploy@<IP-VPS>:/home/deploy/
+   ```
+3. **VPS — importar y verificar:**
+   ```bash
+   cd /opt/loopchat && bash scripts/migration/import-vps.sh /home/deploy/<fecha>
+   ```
+   Verifica SHA256 del paquete, versión de Chatwoot y que las bases destino estén vacías; restaura Chatwoot y Loopchat,
+   corre migraciones, compara conteos fila a fila contra los de la PC, comprueba que **todas** las credenciales cifradas se
+   descifren, levanta los servicios y re-apunta el webhook Chatwoot → Loopchat a `APP_URL`.
+   Si algo no coincide, termina con error **antes** de levantar servicios → ir a Rollback.
+4. **Validación en el navegador (antes de tocar Meta):** login, Todo Trabajo → Configuración → IA → *Probar* `PruebaOficial`;
+   WhatsApp → *Verificar* cada número; bots y equipo publicados; conversaciones e historial visibles.
+5. **Meta — cambiar el webhook** de cada número a `https://<CHATWOOT_DOMAIN>/webhooks/whatsapp/<número sin +>` con el mismo
+   Verify Token del inbox (en la UI de Chatwoot). Repetir para los dos números.
+6. **Prueba real:** WhatsApp desde un celular a cada número → respuesta del bot; derivación a persona; oportunidad en el pipeline.
+7. Recién ahí: activar backups (`docs/operations.md` § Backups) y borrar el paquete del VPS (`rm -rf /home/deploy/<fecha>`).
+
+## 2. Validaciones de integridad (automáticas en `import-vps.sh`)
+
+- `sha256sum -c SHA256SUMS`: el paquete llegó completo.
+- Conteos idénticos PC ↔ VPS en 22 tablas de Loopchat (empresas, usuarios, bots y versiones, equipos, reglas y conocimiento,
+  productos, pipelines, oportunidades, contactos, conversaciones, mensajes, conexiones) y 13 de Chatwoot (cuentas, usuarios,
+  inboxes, canales WhatsApp, webhooks, Platform App, contactos, conversaciones, mensajes, adjuntos).
+- `npm run verify:restore`: 0 credenciales sin descifrar (IA, Meta, Chatwoot).
+- `/api/health` de Loopchat y `/api` de Chatwoot responden.
+
+## 3. Rollback
+
+**Antes del paso 5 (Meta sin cambiar):** sin pérdida. En la PC:
+```powershell
+Remove-Item storage\run\MIGRATED_TO_VPS
+powershell -ExecutionPolicy Bypass -File scripts\dev\dev-start.ps1
+```
+y actualizar el webhook de Meta a la nueva URL del túnel (`docs/local-whatsapp-setup/04_META_CONFIGURATION.md`; los túneles
+cambian de URL en cada arranque). En el VPS: `docker compose … down` (sin `-v` si se quiere investigar).
+
+**Después del paso 5 (el VPS ya procesó mensajes reales):** volver a la PC sin más pasos perdería esas conversaciones.
+Hacer el camino inverso: en el VPS `npm run backup` (o `pg_dump` de ambas bases), restaurar en la PC sobre bases vacías y recién
+ahí el rollback de arriba. Preferir corregir en el VPS salvo falla grave.
+
+## 4. Datos que no migran
+
+- Cola de trabajos de Sidekiq (Redis de Chatwoot): se descarta; lo pendiente lo reintenta Meta.
+- Archivos de conocimiento de Loopchat: hoy no hay subidos (todo el conocimiento de Todo Trabajo es texto en la base). Si se
+  suben antes del corte, el export los incluye (`storage/knowledge`, `storage/products`).
+- `storage/run`, `storage/tunnels`, `storage/backups` de la PC: son locales, no se migran.

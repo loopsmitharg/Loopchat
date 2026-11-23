@@ -19,7 +19,8 @@ x-app: &app
     WORKER_TENANT_CONCURRENCY: ${WORKER_TENANT_CONCURRENCY:-2}
   volumes:
     - loopchat_storage:/data/storage
-  depends_on: [db]
+  depends_on:
+    db: { condition: service_healthy }
   restart: always
 
 services:
@@ -46,6 +47,9 @@ services:
       STORAGE_DIR: /data/storage
       MONITOR_APP_URL: http://app:3000
       MONITOR_DISK_PATHS: /data/storage
+      # `environment` no se fusiona con el de x-app: repetir lo que exige el arranque en producción
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-172.16.0.0/12}
+      LOOPCHAT_INLINE_WORKER: "false"
 
   db:
     image: postgres:16-alpine
@@ -54,6 +58,11 @@ services:
       POSTGRES_DB: loopchat
       POSTGRES_USER: loopchat
       POSTGRES_PASSWORD: ${LOOPCHAT_DB_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U loopchat -d loopchat"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
     volumes:
       - loopchat_db:/var/lib/postgresql/data
 

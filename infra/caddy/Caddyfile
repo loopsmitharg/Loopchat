@@ -1,0 +1,35 @@
+# Caddy en el host del VPS (proxy TLS delante de Loopchat y Chatwoot, ambos en 127.0.0.1).
+# Dominios parametrizados: APP_DOMAIN y CHATWOOT_DOMAIN se leen del entorno del servicio caddy
+# (/etc/caddy/caddy.env, cargado por infra/caddy/caddy-env.conf). Validar: caddy validate --config /etc/caddy/Caddyfile
+#
+# TLS: Cloudflare proxied + modo "Full (strict)" con un Cloudflare Origin Certificate para ambos dominios
+# en /etc/caddy/cf-origin.pem y /etc/caddy/cf-origin.key (no requiere ACME detrás del proxy).
+{
+	servers {
+		# Solo Cloudflare es proxy de confianza: rangos de https://www.cloudflare.com/ips/ (revisar al instalar)
+		trusted_proxies static 173.245.48.0/20 103.21.244.0/22 103.22.200.0/22 103.31.4.0/22 141.101.64.0/18 108.162.192.0/18 190.93.240.0/20 188.114.96.0/20 197.234.240.0/22 198.41.128.0/17 162.158.0.0/15 104.16.0.0/13 104.24.0.0/14 172.64.0.0/13 131.0.72.0/22 2400:cb00::/32 2606:4700::/32 2803:f800::/32 2405:b500::/32 2405:8100::/32 2a06:98c0::/29 2c0f:f248::/32
+		client_ip_headers CF-Connecting-IP
+	}
+}
+
+{$APP_DOMAIN} {
+	tls /etc/caddy/cf-origin.pem /etc/caddy/cf-origin.key
+	# la app además corta el stream: 512 KB webhooks/JSON, ~5 MB archivos
+	request_body {
+		max_size 6MB
+	}
+	header Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	reverse_proxy 127.0.0.1:3000 {
+		# la app recorre X-Forwarded-For desde la derecha saltando TRUSTED_PROXIES (red Docker):
+		# entregarle solo la IP real del cliente que resolvió Caddy (CF-Connecting-IP de un proxy confiable)
+		header_up X-Forwarded-For {client_ip}
+	}
+}
+
+{$CHATWOOT_DOMAIN} {
+	tls /etc/caddy/cf-origin.pem /etc/caddy/cf-origin.key
+	request_body {
+		max_size 50MB
+	}
+	reverse_proxy 127.0.0.1:3001
+}

@@ -16,6 +16,9 @@ const eslintConfig = defineConfig([
     ".next-e2e/**",
     // Proyecto de video aislado (Remotion), con su propio lint
     "marketing/**",
+    // Skills de agentes instaladas localmente (ignoradas por Git)
+    ".agents/**",
+    ".claude/**",
     "playwright-report/**",
     "test-results/**",
     "storage/**",

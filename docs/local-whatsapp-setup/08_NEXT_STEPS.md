@@ -30,8 +30,8 @@ Conectar el número de prueba de Meta a Todo Trabajo: Loopchat → Configuració
 
 ## Pendientes
 
-1. **Meta**: credenciales del número de prueba y token de usuario del sistema (BLOCKED_EXTERNAL).
-2. **IA real**: crear la conexión real en Loopchat (Configuración → IA) con una clave autorizada y límites de consumo; luego `TODO_TRABAJO_AI_CONNECTION_ID=<id> npx tsx --conditions=react-server scripts/setup-todo-trabajo.ts` para asignarla a los 7 bots y republicar. Hoy los bots apuntan a "Simulador de IA local (NO es IA real)", que en producción queda bloqueado (URL privada) y deriva a una persona.
+1. ~~**Meta**~~ HECHO (2026-11-22): números `Preubas` (+1 555…) y `pruebasnumeroReal` (+54 9 11…) conectados.
+2. ~~**IA real**~~ HECHO (2026-11-22): conexión `PruebaOficial` verificada y asignada a los bots.
 3. **Túnel con nombre** (opción A) para URLs estables: requiere `cloudflared tunnel login` del propietario de Cloudflare.
-4. **Actualizar Next.js** desde 16.4.2 (aviso de seguridad del build). Es un cambio de dependencia del proyecto: hacerlo en su propia rama/PR con la suite completa.
+4. ~~**Actualizar Next.js**~~ HECHO (2026-11-23): 16.4.6. Siguiente paso: migración al VPS (`docs/migracion-vps.md`).
 5. Horario de atención y canal seguro para datos sensibles de Todo Trabajo: el dossier no los define (ver `09_TODO_TRABAJO_CHATBOTS.md`, limitaciones).

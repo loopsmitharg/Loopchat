@@ -15,8 +15,10 @@ RUN DATABASE_URL=postgres://build@localhost/build BETTER_AUTH_SECRET=build-only-
 FROM node:22-bookworm-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
+# /data/storage: el volumen nombrado hereda dueño y permisos de este directorio (si no, queda de root y loopchat no puede escribir)
 RUN apt-get update && apt-get install -y --no-install-recommends postgresql-client openssl rclone ca-certificates && rm -rf /var/lib/apt/lists/* \
-  && useradd --system --uid 1001 loopchat
+  && useradd --system --uid 1001 loopchat \
+  && mkdir -p /data/storage && chown loopchat:loopchat /data/storage
 COPY --from=build --chown=loopchat /app ./
 USER loopchat
 EXPOSE 3000

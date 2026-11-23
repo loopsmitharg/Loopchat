@@ -3,6 +3,10 @@
 param([switch]$Build)
 . (Join-Path $PSScriptRoot '_lib.ps1')
 
+# Corte de migracion: si el sistema ya vive en el VPS, la PC no debe volver a responder mensajes
+$migrated = Join-Path $Run 'MIGRATED_TO_VPS'
+if (Test-Path $migrated) { throw "Esta PC ya fue migrada al VPS ($((Get-Content $migrated -TotalCount 1))). Para un rollback ver docs/migracion-vps.md." }
+
 Write-Host '1) Docker'
 docker info --format '{{.ServerVersion}}' 2>$null | Out-Null
 if ($LASTEXITCODE -ne 0) {

@@ -1,0 +1,24 @@
+# Contexto de build de la imagen de Loopchat (infra/loopchat/Dockerfile hace COPY . .):
+# nunca meter secretos, datos locales ni dependencias del host en la imagen.
+.git
+node_modules
+.next
+.next-e2e
+.env
+.env.*
+!.env.example
+infra/chatwoot/.env
+infra/chatwoot/.env.*
+storage
+storage-e2e
+playwright-report
+test-results
+marketing
+*.dump
+*.tar
+*.tar.gz
+*.enc
+tsconfig.tsbuildinfo
+Loopchat_Paquete_Implementacion_Autonoma.zip
+.agents
+.claude

@@ -2,6 +2,10 @@
 
 > No se realizó ningún despliegue: requiere contratar VPS, dominio y credenciales (decisiones del usuario). Este documento deja los pasos exactos y verificables. Dimensionar con pruebas; un VPS barato no garantiza alta concurrencia.
 
+**Archivos listos para el VPS:** `infra/loopchat/env.production.example` (variables con dominios parametrizados y Resend),
+`infra/chatwoot/chatwoot.env.example` (incluye SMTP de Resend), `infra/caddy/Caddyfile` + `caddy-env.conf` (dominios por
+variable, Cloudflare Full strict, IP real del cliente). **Migración desde la PC con todos los datos:** `docs/migracion-vps.md`.
+
 ## Topología recomendada (portable)
 
 ```
@@ -59,7 +63,11 @@ docker compose -f infra/loopchat/docker-compose.yml --env-file .env.production r
 > Loopchat. Si se decide usar una URL interna, Chatwoot debe correr con `SAFE_FETCH_ALLOW_PRIVATE_NETWORK=true`, lo que
 > también relaja su protección SSRF para otras descargas.
 
-## 3. Proxy TLS (ejemplo Caddy)
+## 3. Proxy TLS (Caddy) — versión lista: `infra/caddy/Caddyfile`
+
+> El ejemplo de abajo es la versión mínima sin Cloudflare. Detrás de Cloudflare usar el archivo del repo: confía solo en los
+> rangos de Cloudflare y pasa a la app la IP real (`CF-Connecting-IP`); si no, todos los usuarios comparten la IP de Cloudflare
+> en los límites de login.
 
 ```
 loopchat.tu-dominio.com {

@@ -1,6 +1,6 @@
 # Estado de ejecución — Loopchat V1
 
-**Última actualización:** 2026-11-21 (entorno local real en Windows; ver sección "Entorno local real + Todo Trabajo") · **Agente:** implementación autónoma (Claude) · **Entorno de verificación:** Linux (Node 22, PostgreSQL 16, Chromium 1194), sin acceso a Docker Hub, Meta ni proveedores de IA reales.
+**Última actualización:** 2026-11-23 (Fase 1 de despliegue: preparación para VPS; ver sección "Preparación para VPS") · **Agente:** implementación autónoma (Claude) · **Entorno de verificación:** Linux (Node 22, PostgreSQL 16, Chromium 1194), sin acceso a Docker Hub, Meta ni proveedores de IA reales.
 
 Leyenda: `IMPLEMENTED` código completo · `VERIFIED_LOCAL` pruebas locales automatizadas pasan · `VERIFIED_REAL` probado contra servicios reales · `BLOCKED_EXTERNAL` depende de acceso externo · `NOT_DONE` no realizado.
 
@@ -22,6 +22,27 @@ Leyenda: `IMPLEMENTED` código completo · `VERIFIED_LOCAL` pruebas locales auto
 | 11 Dashboard y operaciones | VERIFIED_LOCAL | — |
 | 12 QA, seguridad, responsive | VERIFIED_LOCAL | Pruebas reales listadas en `qa-final.md` |
 | 13 Ship V1 | **VERIFIED_LOCAL / BLOCKED_EXTERNAL** (no `SHIPPED`) | Despliegue y validación real requieren VPS, dominio, Meta y claves IA |
+
+## Preparación para VPS — Fase 1 (2026-11-23) — rama `fix/loopchat-production-readiness`
+
+Sin despliegue: todavía no hay VPS, dominio confirmado ni cuenta de Resend. Procedimiento: `docs/migracion-vps.md`.
+
+| Área | Estado | Evidencia |
+|---|---|---|
+| Estado real local: Todo Trabajo con IA real `PruebaOficial` (verificada 22/11) y 2 números WhatsApp `connected` | VERIFIED_REAL (consulta a la base local) | Corrige las filas Meta/IA de la sección 2026-11-21 |
+| Next.js 16.4.2 → 16.4.6 (+ `eslint-config-next`): corrige los 7 avisos de Next | VERIFIED_LOCAL | `npm audit --omit=dev`: quedan 4 *moderate* de `drizzle-kit`→esbuild (solo servidor de desarrollo); `--audit-level=high` PASS |
+| `.dockerignore` (antes la imagen copiaba `.env`, `storage/` y `node_modules` del host) | IMPLEMENTED + VERIFIED_LOCAL | build de la imagen OK |
+| Dockerfile: `/data/storage` con dueño `loopchat` (el volumen quedaba de root y no se podían subir archivos) | VERIFIED_LOCAL | el import del ensayo escribe en el volumen como `loopchat` |
+| Compose Loopchat: healthcheck de la base + `depends_on: service_healthy`; monitor con `TRUSTED_PROXIES` (antes no arrancaba en producción) | VERIFIED_LOCAL | ensayo: app, worker y monitor arriba |
+| `infra/loopchat/env.production.example`, Resend en Loopchat y Chatwoot, `infra/caddy/Caddyfile` con dominios por variable | IMPLEMENTED; Caddyfile VERIFIED_LOCAL (`caddy adapt`, Caddy 2) | Resend real: **BLOCKED_EXTERNAL** (API key + dominio verificado) |
+| Flujos de email con la imagen de producción y SMTP local Mailpit (**no** Resend): alta de empresa, invitación desde /admin y desde la empresa, aceptar invitación, restablecer contraseña, login con la nueva | VERIFIED_LOCAL 17/17 | links con `APP_URL` https, cookies `__Secure-`, sin `devUrl` expuesto |
+| `scripts/migration/export-local.ps1` (corte + export) | IMPLEMENTED, **no ejecutado** (detiene el entorno local; queda para el día del corte) | ensayo con volcados equivalentes de solo lectura |
+| `scripts/migration/import-vps.sh` (restore conjunto + verificación) | VERIFIED_LOCAL (ensayo en proyectos Docker aislados) | SHA256 OK; conteos idénticos en 22 tablas de Loopchat + 13 de Chatwoot; 15/15 credenciales descifradas; 6 webhooks re-apuntados; `/api/health` 200 |
+| `dev-start.ps1` se niega a arrancar si la PC ya fue migrada (`storage/run/MIGRATED_TO_VPS`) | IMPLEMENTED | — |
+| Error del worker `Chatwoot: Invalid Access Token` | Diagnosticado: solo empresas DEMO (cuentas del simulador); Todo Trabajo sincroniza bien | borrar las empresas DEMO en producción |
+
+Comandos: `npm run typecheck` PASS · `npm run lint` PASS (se excluyen `.agents/` y `.claude/`) · `npm test` 270/271 en la corrida con el build de Docker en paralelo; el que falló (`engine-reliability`, umbral de 1500 ms, midió 1897 ms) pasa 16/16 repetido solo · audit vitest 16 PASS / 2 skipped (requieren Chatwoot real) · build de producción dentro de la imagen PASS.
+No ejecutado: E2E Playwright y sondas HTTP de aislamiento (corren en CI), `chatwoot-real.audit` (requiere Chatwoot real configurado para el test), pruebas con Meta, IA y Resend reales.
 
 ## Entorno local real + Todo Trabajo (2026-11-21) — rama `fix/loopchat-production-readiness`
 
