@@ -21,9 +21,9 @@ export const COMPANY_PROFILE = {
       "Todas las cuentas y publicaciones pasan por moderación administrativa. Herramientas propias de auditoría ATS, análisis con IA, cartas de presentación y CV en formato Harvard. Comunidad circular: directorio de profesionales y programa de referidos.",
     coverage: "República Argentina (24 jurisdicciones) y modalidades remotas o híbridas.",
     languages: ["es"] as ("es" | "en" | "pt")[],
-    contactChannels: "Instagram @todotrabajo.ar · TikTok @todotrabajo.ar · Facebook: Todotrabajo Ar",
+    contactChannels: "Sitio web: https://todotrabajo.net · Instagram @todotrabajo.ar · TikTok @todotrabajo.ar · Facebook: Todotrabajo Ar",
     extraInfo:
-      "El dossier no informa sitio web, correos, teléfonos, domicilios ni horarios de atención: no inventarlos. Si el cliente los pide, ofrecer las redes oficiales o derivar a una persona.",
+      "No están informados correos, teléfonos, domicilios ni horarios de atención: no inventarlos. Si el cliente los pide, ofrecer el sitio todotrabajo.net, las redes oficiales o derivar a una persona.",
   },
   objectives: {
     primary: "customer_service" as const,
@@ -58,11 +58,16 @@ export const COMPANY_RULES: Rule[] = [
   { text: "No afirmar que se procesó una postulación, que se publicó una oferta o perfil, o que se analizó un CV: el chat no ejecuta esas acciones en la plataforma.", category: "other" },
   { text: "No modificar ni prometer cambios de suscripciones, créditos, puntos, pagos, reintegros o datos comerciales. Esas operaciones las hace una persona autorizada.", category: "payments" },
   { text: "Nunca pedir contraseñas, códigos de verificación, CBU, datos de tarjeta, DNI, CUIL ni datos de salud. Si el cliente los envía, pedirle que no los comparta por chat y no usarlos.", category: "privacy" },
-  { text: "No pedir que envíen el CV ni documentación por WhatsApp: el análisis de CV se hace cargándolo en la Suite CV de la plataforma.", category: "privacy" },
+  { text: "La carga y el análisis de CVs los hace el equipo de Todo Trabajo, no el usuario en la web: no digas que lo cargue en la plataforma ni pidas el CV por chat. Para avanzar, registrá el interés y ofrecé que una persona del equipo lo contacte.", category: "privacy" },
+  { text: "Sitio oficial: https://todotrabajo.net. Invitá a entrar para registrarse, ver y postularse a ofertas, conocer los planes Premium o sumarse al directorio, cuando ayude a la consulta (no en cada mensaje).", category: "other" },
+  { text: "Formato WhatsApp: párrafos cortos (1 o 2 oraciones) separados por una línea en blanco. Opciones o pasos: un ítem por línea, con •. *Negrita* solo para precios o nombres de servicios. Nunca un bloque de texto largo ni más de 3 párrafos.", category: "sales_conduct" },
   { text: "No revelar información de otros candidatos, empresas o usuarios, ni datos internos, métricas o credenciales de Todo Trabajo.", category: "privacy" },
   { text: "Si la persona pide hablar con alguien del equipo, o la consulta requiere una operación administrativa, derivar a una persona sin insistir.", category: "handoff" },
   { text: "Tratar al cliente de vos, con respuestas breves para WhatsApp, sin presión comercial. No dar información que no esté en el conocimiento o el catálogo: si no se sabe, decirlo y ofrecer derivar.", category: "sales_conduct" },
 ];
+
+/** Reglas reemplazadas: el script las borra si siguen cargadas. */
+export const OBSOLETE_RULES = ["No pedir que envíen el CV ni documentación por WhatsApp: el análisis de CV se hace cargándolo en la Suite CV de la plataforma."];
 
 /* ------------------------------------------------------------------ */
 /* Conocimiento: documentos temáticos con texto LITERAL del dossier     */
@@ -117,7 +122,7 @@ export const PRODUCTS: { key: ProductKey; title: string; description: string; pr
   { key: "svc_ats", title: "Servicio: Escaneo y Diagnóstico de CV (Filtro ATS)", price: null, description: "Evaluación técnica de compatibilidad del currículum frente a los sistemas automáticos de filtrado que usan las áreas de RR.HH. Precio no informado: se consulta con el equipo." },
   { key: "svc_cv", title: "Servicio: Profesionalización y Armado de CV en Formato ATS", price: null, description: "Rediseño y reestructuración integral del currículum bajo estándares ATS para superar filtros algorítmicos y destacar logros. Otorga +1.500 puntos en el programa de referidos. Precio no informado: se consulta con el equipo." },
   { key: "svc_li", title: "Servicio: Optimización de Perfil de LinkedIn", price: null, description: "Mejora estratégica del perfil profesional en LinkedIn para atraer reclutadores y búsquedas activas (inbound recruiting). Otorga +1.500 puntos en el programa de referidos. Precio no informado: se consulta con el equipo." },
-  { key: "ai_ats", title: "Suite CV: ATS Check (diagnóstico técnico)", price: null, description: "Sin costo de créditos al cargar el CV. Acepta PDF (hasta 5 MiB y 20 páginas) o texto plano. Calcula un Puntaje ATS de 0 a 100 en 7 dimensiones, detecta habilidades técnicas y alerta si el CV incluye datos sensibles innecesarios (DNI, CUIL/CUIT, pasaporte, CBU/IBAN)." },
+  { key: "ai_ats", title: "Suite CV: ATS Check (diagnóstico técnico)", price: null, description: "Sin costo de créditos. Trabaja sobre el CV en PDF (hasta 5 MiB y 20 páginas) o texto plano, que carga el equipo de Todo Trabajo. Calcula un Puntaje ATS de 0 a 100 en 7 dimensiones, detecta habilidades técnicas y alerta si el CV incluye datos sensibles innecesarios (DNI, CUIL/CUIT, pasaporte, CBU/IBAN)." },
   { key: "ai_quality", title: "Suite CV: CV Quality & Job Match con IA (1 crédito)", price: null, description: "Costo: 1 crédito. CV Quality: auditoría con IA de redacción, claridad e impacto del CV. Job Match (opcional): compara el CV con la descripción de un puesto (ajuste, palabras clave presentes y habilidades faltantes)." },
   { key: "ai_harvard", title: "Suite CV: Generador de CV corregido en PDF formato Harvard (5 créditos)", price: null, description: "Costo: 5 créditos. Requiere haber completado antes CV Quality. Redacta el CV optimizado usando solo información real del documento original (sin inventar experiencias ni métricas). PDF A4 de una columna, sin fotos, texto seleccionable y color de acento personalizable. Descargas posteriores sin costo." },
   { key: "ai_carta", title: "Suite CV: Carta de presentación con IA (1 crédito)", price: null, description: "Costo: 1 crédito. Carta en primera persona (máximo 135 palabras de cuerpo) que cruza el último CV guardado con una oferta específica. En español o inglés. Exporta PDF A4 con descargas ilimitadas sin recargo." },
@@ -142,6 +147,23 @@ export const PIPELINES: { key: PipelineKey; name: string; stages: { name: string
 
 export type BotKey = "recepcion" | "empleos" | "premium" | "cv" | "empresas" | "profesionales" | "soporte";
 type Tool = "create_opportunity" | "update_stage" | "handoff" | "create_task" | "classify" | "use_knowledge" | "use_catalog" | "collect_data";
+
+/** Se agrega al final de las instrucciones de cada bot: formato de WhatsApp y cuándo pasar a una persona. */
+export const WHATSAPP_STYLE = `
+FORMATO (WhatsApp, obligatorio):
+- Como máximo 2 oraciones por párrafo, con una línea en blanco entre párrafos.
+- Opciones, beneficios o pasos: un ítem por línea, empezando con "• ".
+- *Negrita* solo para precios o nombres de servicios. Nada de bloques largos.
+Ejemplo:
+El Premium de 3 meses sale *$6.000* (unos $2.000 por mes).
+
+Incluye:
+• Postulaciones ilimitadas
+• Acceso a Ofertas Exclusivas
+
+¿Querés que te cuente cómo activarlo?
+
+DERIVAR A UNA PERSONA: solo si el cliente lo pide, si acepta tu ofrecimiento de que lo contacten, o si hace falta verificar un pago, una cuenta o un saldo y el cliente lo necesita. Si ofrecés el contacto, primero preguntá y esperá la respuesta.`;
 
 export const TRANSFER_MESSAGE = "Te paso con una persona del equipo de Todo Trabajo para que lo revise. Te van a responder por este mismo chat. 🙌";
 // el runtime compara por SUBCADENA: frases completas para no derivar por "recursos humanos" u "operadores"
@@ -209,7 +231,7 @@ Cómo responder:
 Qué explicás (según el conocimiento): ofertas internas (postulación con un clic y acceso al contacto de la empresa), búsquedas externas (redirigen al portal de la empresa), ofertas Exclusivas/Premium, filtros (palabra clave, ubicación, área, categoría, provincia, país y modalidad Full-Time, Part-Time o Freelance), ordenamiento y el Canal de Difusión de Empleos.
 Plan Estándar gratuito: hasta 20 postulaciones a ofertas comunes por mes. Premium: postulaciones ilimitadas y acceso a Ofertas Exclusivas.
 Importante:
-- No tenés acceso en tiempo real a las ofertas: nunca digas que hay vacantes, qué empresas contratan ni salarios. Explicá cómo buscarlas con los filtros (por ejemplo, área y provincia).
+- No tenés acceso en tiempo real a las ofertas: nunca digas que hay vacantes, qué empresas contratan ni salarios. Explicá cómo buscarlas en https://todotrabajo.net con los filtros (por ejemplo, área y provincia).
 - No postulás a nadie ni ves postulaciones: explicá el proceso.
 - No prometas entrevistas ni contrataciones. Sé empático y motivador, sin insistir.`,
     config: base({
@@ -253,8 +275,8 @@ Importante:
     pipeline: "cv",
     instructions: `Sos el especialista en CV e inteligencia artificial de Todo Trabajo. Explicás de forma didáctica y precisa los servicios de optimización (escaneo ATS, armado de CV en formato ATS, optimización de LinkedIn) y la Suite CV por créditos.
 Consumo de créditos de la Suite CV: ATS Check sin costo de créditos al cargar el CV; CV Quality & Job Match 1 crédito; Generador de CV Harvard 5 créditos y requiere haber hecho antes CV Quality; Carta de presentación 1 crédito. Packs y precios: solo los del catálogo.
-- Vos no analizás CVs por chat: el diagnóstico se hace cargando el CV (PDF hasta 5 MiB y 20 páginas, o texto) en la Suite CV. Nunca digas que lo analizaste ni des un puntaje.
-- No pidas que manden el CV por WhatsApp.
+- El CV lo carga y procesa el equipo de Todo Trabajo (no el usuario en la web). Vos no analizás CVs: nunca digas que lo analizaste ni des un puntaje.
+- Para avanzar con cualquier servicio o módulo: registrá el interés y ofrecé que una persona del equipo lo contacte para coordinar. No pidas el CV por chat.
 - No garantices superar filtros ATS ni conseguir entrevistas. La Suite no inventa experiencias, títulos ni métricas.
 - No ves ni descontás créditos.
 - Los servicios de escaneo, armado de CV y LinkedIn no tienen precio cargado: decí que se consulta con el equipo y registrá el interés.`,

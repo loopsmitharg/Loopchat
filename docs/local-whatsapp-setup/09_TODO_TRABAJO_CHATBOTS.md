@@ -141,6 +141,15 @@ Derivaciones duplicadas por par de nodos (la validación lo rechaza) → una sol
 
 **No conectado** (BLOCKED_EXTERNAL: faltan credenciales de Meta). El equipo está publicado y activo para todos los números: al conectar el número de prueba en Todo Trabajo empieza a atender sin más cambios. Los bots **no** están respondiendo por WhatsApp; solo se probaron en el simulador y por la bandeja API de Chatwoot.
 
+## Ajustes del 2026-11-22 (con IA real y número conectado)
+
+- Proveedor de IA real (`PruebaOficial`) asignado a los 7 bots; el script ya no vuelve al simulador si un bot tiene otra conexión.
+- Sitio oficial **https://todotrabajo.net** en el perfil de la empresa y regla para invitar a entrar cuando ayude.
+- CV: la carga y el análisis los hace el **equipo** de Todo Trabajo (no el usuario en la web). Regla reemplazada; el bot registra el interés y ofrece que una persona lo contacte.
+- Formato WhatsApp: regla obligatoria + guía con ejemplo al final de las instrucciones de cada bot (párrafos de 1–2 oraciones, línea en blanco, viñetas "•", negrita solo para precios/servicios). Derivar a persona solo si el cliente lo pide o acepta.
+- Bots en v6 (Recepción v5) y equipo **v5**. Simulación con IA real: contenido correcto (precios del catálogo, 5 créditos + CV Quality, sin saldos inventados, sin descuento del 80%), mensajes en párrafos y sin derivaciones prematuras.
+- Envíos al número de prueba de Meta con teléfonos argentinos: error #131030 (Meta guarda el destinatario como 54 11 15…, WhatsApp lo identifica como 549…/BSUID). Se resolvió conectando un número de producción.
+
 ## Cuadro de verificación
 
 | Componente | Estado |

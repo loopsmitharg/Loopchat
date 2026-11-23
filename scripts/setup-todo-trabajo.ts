@@ -10,7 +10,7 @@ import { createTenant } from "../src/server/services/tenants";
 import { provisionChatwootAccount } from "../src/server/services/chatwoot-provisioning";
 import { acceptInvitation } from "../src/server/services/invitations";
 import { updateTenantSettings } from "../src/server/services/tenant-settings";
-import { createRule, getAiProfile, updateAiProfile } from "../src/server/services/ai-profile";
+import { createRule, deleteRule, getAiProfile, updateAiProfile } from "../src/server/services/ai-profile";
 import { addTextSource, deleteKnowledge, listKnowledge } from "../src/server/services/knowledge";
 import { createProduct, listProducts, setBotProducts, updateProduct, listBotProductIds } from "../src/server/services/products";
 import { createPipeline, listPipelines, savePipelineStages } from "../src/server/services/pipelines";
@@ -18,7 +18,7 @@ import { createAiConnection, listAiConnections } from "../src/server/services/ai
 import { createBot, getBot, listBots, publishBot, updateBotSettings } from "../src/server/services/bots";
 import { createTeam, getTeam, listTeams, publishTeam, saveTeamDraft, setTeamStatus } from "../src/server/services/teams";
 import type { TeamEdge, TeamGraph } from "../src/lib/team/types";
-import { BOTS, COMPANY_PROFILE, COMPANY_RULES, CROSS_KEYWORDS, ENTRY_KEYWORDS, FROM_SUPPORT, HANDOFF_KEYWORDS, PIPELINES, PRODUCTS, TENANT, extractSections, type BotKey } from "./lib/todo-trabajo-data";
+import { BOTS, COMPANY_PROFILE, COMPANY_RULES, OBSOLETE_RULES, CROSS_KEYWORDS, ENTRY_KEYWORDS, FROM_SUPPORT, HANDOFF_KEYWORDS, PIPELINES, WHATSAPP_STYLE, PRODUCTS, TENANT, extractSections, type BotKey } from "./lib/todo-trabajo-data";
 
 /**
  * Configura (idempotente) la empresa Todo Trabajo en Loopchat usando los servicios reales:
@@ -70,6 +70,7 @@ async function main() {
   await updateTenantSettings(ctx, { timezone: "America/Argentina/Buenos_Aires", defaultCurrency: "ARS", autoCreateOpportunity: false });
   await updateAiProfile(ctx, COMPANY_PROFILE);
   const existingRules = (await getAiProfile(ctx)).rules;
+  for (const r of existingRules) if (OBSOLETE_RULES.includes(r.text)) await deleteRule(ctx, r.id);
   for (const r of COMPANY_RULES) if (!existingRules.some((x) => x.text === r.text)) await createRule(ctx, { ...r, mandatory: true, enabled: true });
   report.rules = (await getAiProfile(ctx)).rules.filter((r) => r.mandatory && r.enabled).length;
   log("perfil de IA y reglas obligatorias:", report.rules);
@@ -162,8 +163,10 @@ async function main() {
       },
       tools: { ...spec.config.tools, allowedStageIds: pipelineStages.filter((s) => s.kind === "open").map((s) => s.id) },
     };
-    const fields = { role: spec.role, aiConnectionId, instructions: spec.instructions, allowedTools: spec.tools, handoffKeywords: HANDOFF_KEYWORDS, channelConnectionId: null, config };
     let b = allBots.find((x) => x.name === spec.name);
+    // sin TODO_TRABAJO_AI_CONNECTION_ID se conserva la conexión que el bot ya tenga (no vuelve al simulador)
+    const ai = process.env.TODO_TRABAJO_AI_CONNECTION_ID ? aiConnectionId : (b?.aiConnectionId ?? aiConnectionId);
+    const fields = { role: spec.role, aiConnectionId: ai, instructions: `${spec.instructions}\n${WHATSAPP_STYLE}`, allowedTools: spec.tools, handoffKeywords: HANDOFF_KEYWORDS, channelConnectionId: null, config };
     if (!b) {
       const created = await createBot(ctx, { name: spec.name, mode: "instructions", ...fields });
       b = { ...created } as unknown as (typeof allBots)[number];
