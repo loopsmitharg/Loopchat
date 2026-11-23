@@ -45,7 +45,7 @@ export function decryptSecret(payload: string, aad?: string): string {
   const [, keyId, ivB, tagB, ctB] = parts;
   const key = loadKeys().find((k) => k.id === keyId);
   if (!key) throw new Error(`Clave de cifrado ${keyId} no disponible`);
-  const decipher = createDecipheriv("aes-256-gcm", key.key, Buffer.from(ivB, "base64url"));
+  const decipher = createDecipheriv("aes-256-gcm", key.key, Buffer.from(ivB, "base64url"), { authTagLength: 16 });
   if (aad) decipher.setAAD(Buffer.from(aad));
   decipher.setAuthTag(Buffer.from(tagB, "base64url"));
   return Buffer.concat([decipher.update(Buffer.from(ctB, "base64url")), decipher.final()]).toString("utf8");

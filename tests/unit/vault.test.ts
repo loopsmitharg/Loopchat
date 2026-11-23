@@ -21,6 +21,11 @@ describe("vault", () => {
     expect(decryptSecret(enc)).toBe("viejo");
     expect(needsReencryption(enc)).toBe(true);
   });
+  it("rechaza un tag de autenticación truncado", () => {
+    const parts = encryptSecret("x", "tenant-1").split(":");
+    parts[3] = Buffer.from(parts[3], "base64url").subarray(0, 4).toString("base64url");
+    expect(() => decryptSecret(parts.join(":"), "tenant-1")).toThrow();
+  });
   it("hint nunca expone el valor completo", () => {
     expect(secretHint("EAAG1234567890abcd")).toBe("••••abcd");
     expect(secretHint("short")).toBe("••••");
