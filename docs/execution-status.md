@@ -44,6 +44,31 @@ Sin despliegue: todavía no hay VPS, dominio confirmado ni cuenta de Resend. Pro
 Comandos: `npm run typecheck` PASS · `npm run lint` PASS (se excluyen `.agents/` y `.claude/`) · `npm test` 270/271 en la corrida con el build de Docker en paralelo; el que falló (`engine-reliability`, umbral de 1500 ms, midió 1897 ms) pasa 16/16 repetido solo · audit vitest 16 PASS / 2 skipped (requieren Chatwoot real) · build de producción dentro de la imagen PASS.
 No ejecutado: E2E Playwright y sondas HTTP de aislamiento (corren en CI), `chatwoot-real.audit` (requiere Chatwoot real configurado para el test), pruebas con Meta, IA y Resend reales.
 
+## Cierre de la Fase 1 (2026-11-23, noche) — rama `fix/loopchat-production-readiness`
+
+| Área | Estado | Evidencia |
+|---|---|---|
+| CI en GitHub (commit `a098d8a`): job *Lint, typecheck, tests, build* | VERIFIED (GitHub Actions) | lint, typecheck, test, audit vitest, build y `npm audit --audit-level=high` en verde; Gitleaks en verde |
+| CI: Semgrep fallaba (todas las corridas de la rama) | Corregido, VERIFIED_LOCAL | hallazgo real `gcm-no-tag-length` en `src/server/crypto/vault.ts`: el descifrado fija `authTagLength: 16` (los secretos ya guardados usan tags de 16 bytes y siguen descifrando); test nuevo que rechaza un tag truncado. Semgrep 1.95.0 con la config de CI: sin hallazgos |
+| CI: `npx playwright install --with-deps chromium` falla en GitHub | **BLOCKED** (sin acceso al log) | el mismo comando en un contenedor Ubuntu 24.04 limpio termina bien (exit 0); `ubuntu-latest` sigue siendo 24.04. GitHub exige iniciar sesión para ver el log del paso |
+| Playwright local (escritorio 1440, móvil 390, axe-core) con `CI=true` | VERIFIED_LOCAL 27/27 | corrida completa 26/27; `bot-teams.spec` falló por tiempo (compilación bajo demanda de `next dev` en Windows) y pasa sola (42 s) |
+| Unit + integración local | VERIFIED_LOCAL 272/272 | `npm test` |
+| Exclusión de secretos | VERIFIED_LOCAL | `.env*`, `infra/chatwoot/.env`, `storage/` (backups, migración, contraseña local), `*.pem`, `marketing/`, skills locales ignorados; se agregan `*.dump`, `*.key`, `*.enc`. `git ls-files` sin archivos sensibles |
+| Dominios | Configurados | `app.loopchat.com.ar`, `chatwoot.loopchat.com.ar`, remitente `no-reply@notify.loopchat.com.ar`. DNS: el dominio usa nameservers de Cloudflare; los tres subdominios todavía no tienen registros |
+| Checklist de cuentas de prueba | IMPLEMENTED (no ejecutado: es para el VPS) | `docs/correccion-cuentas-demo.md` |
+
+**Medición de recursos** (Docker Desktop, entorno real local + imagen de producción de Loopchat con base vacía, después de recorrer las pantallas):
+
+| Servicio | RAM |
+|---|---|
+| Chatwoot rails / sidekiq / postgres / redis | 372 / 442 / 66 / 12 MB |
+| Loopchat app / worker / monitor / postgres | 164 / 188 / 88 / 70 MB |
+| **Total contenedores** | **≈ 1,4 GB** |
+
+Disco: imágenes ≈ 5,6 GB (Chatwoot 2,7; Loopchat 1,8; pgvector 0,65; postgres 0,4); datos: base Loopchat 14 MB, base Chatwoot 21 MB, adjuntos 0. Conclusión: **8 GB alcanzan** (Chatwoot crece con carga y el `next build` dentro de Docker es el pico, ~2–3 GB); 12 GB solo si se suman muchas empresas activas; 16 GB no se justifica. Medición en reposo y carga liviana: no es una prueba de carga.
+
+No ejecutado: corte, cambios en Meta, borrado de empresas DEMO (por indicación), push.
+
 ## Entorno local real + Todo Trabajo (2026-11-21) — rama `fix/loopchat-production-readiness`
 
 Informes en `docs/local-whatsapp-setup/` (01–09). Nada desplegado ni fusionado.

@@ -20,10 +20,10 @@ Herramientas (en el repo):
 ## Checklist del VPS (en orden)
 
 **A. Lo que aportan ustedes**
-- [ ] VPS Ubuntu 24.04, 6 vCPU / 12 GB / ≥ 120 GB SSD, acceso SSH con clave.
-- [ ] Dominio confirmado → `APP_DOMAIN` y `CHATWOOT_DOMAIN` (p. ej. `app.loop-smith.com`, `chatwoot.loop-smith.com`).
+- [ ] VPS Ubuntu 24.04, **4 vCPU / 8 GB RAM / ≥ 80 GB SSD** + 2 GB de swap, acceso SSH con clave (medición: ~1,4 GB en uso con todo levantado; ver `docs/execution-status.md`, cierre de Fase 1).
+- [x] Dominios confirmados: `app.loopchat.com.ar` (Loopchat), `chatwoot.loopchat.com.ar` (Chatwoot); correo desde `notify.loopchat.com.ar`.
 - [ ] Cloudflare: registros A (proxied) y un *Origin Certificate* para ambos dominios; SSL/TLS en **Full (strict)**.
-- [ ] Resend: dominio de envío verificado (SPF/DKIM en Cloudflare), **una API key** con permiso de envío y el remitente (`no-reply@…`).
+- [ ] Resend: dominio de envío `notify.loopchat.com.ar` verificado (registros SPF/DKIM/MX que indique Resend, en Cloudflare), **una API key** con permiso solo de envío; remitente `no-reply@notify.loopchat.com.ar`.
 - [ ] Destino de alertas: `ALERT_EMAIL` y/o `ALERT_WEBHOOK_URL`.
 - [ ] Bucket externo para backups (R2 o B2) + credenciales de `rclone`; par de claves RSA de backup (la privada fuera del servidor).
 - [ ] Gestor de secretos con: `.env` local, `infra/chatwoot/.env` local, API key de Resend, claves de backup.
@@ -43,7 +43,7 @@ git clone https://github.com/loopsmitharg/Loopchat.git /opt/loopchat && cd /opt/
 ```bash
 sudo cp infra/caddy/Caddyfile /etc/caddy/Caddyfile
 sudo install -m 600 cf-origin.pem cf-origin.key /etc/caddy/ && sudo chown caddy: /etc/caddy/cf-origin.*
-printf 'APP_DOMAIN=app.loop-smith.com\nCHATWOOT_DOMAIN=chatwoot.loop-smith.com\n' | sudo tee /etc/caddy/caddy.env
+printf 'APP_DOMAIN=app.loopchat.com.ar\nCHATWOOT_DOMAIN=chatwoot.loopchat.com.ar\n' | sudo tee /etc/caddy/caddy.env
 sudo mkdir -p /etc/systemd/system/caddy.service.d && sudo cp infra/caddy/caddy-env.conf /etc/systemd/system/caddy.service.d/env.conf
 sudo systemctl daemon-reload && sudo caddy validate --config /etc/caddy/Caddyfile && sudo systemctl restart caddy
 ```
@@ -54,9 +54,9 @@ la copia local + SMTP de Resend. `chmod 600` a ambos.
 **E. Corte y migración:** sección 1 (export en la PC → `scp` → `import-vps.sh` → validación → webhook de Meta → prueba real).
 
 **F. Después del corte**
-- [ ] `/admin`: crear tu superadmin real (`npm run bootstrap:admin`, ver `docs/deployment.md`) y borrar `plataforma@demo.loopchat.test`.
+- [ ] Corregir cuentas de prueba sin perder datos: **`docs/correccion-cuentas-demo.md`** (superadmin real, email real del admin de Todo Trabajo y del superadmin de Chatwoot).
 - [ ] Borrar las empresas `DEMO Ferretería Norte` y `DEMO Óptica Sur` (sus cuentas de Chatwoot son del simulador y el worker registra `Invalid Access Token` cada vez que intenta sincronizarlas).
-- [ ] Todo Trabajo: invitar al admin con email real; quitar `admin@todotrabajo.localhost`; borrar la conexión *Simulador de IA local*.
+- [ ] Todo Trabajo: borrar la conexión *Simulador de IA local*.
 - [ ] Probar un reset de contraseña real (prueba de Resend en producción).
 - [ ] Backups: `docs/operations.md` § Backups (timer + restore de prueba).
 - [ ] Checklist de validación de `docs/qa-final.md`.
@@ -64,11 +64,11 @@ la copia local + SMTP de Resend. `chmod 600` a ambos.
 ## 0. Antes del día del corte (sin impacto)
 
 1. VPS listo (Docker, Caddy, firewall), repo clonado en `/opt/loopchat` en el **mismo commit** que corre en la PC.
-2. DNS y certificado de origen listos; `https://<APP_DOMAIN>` y `https://<CHATWOOT_DOMAIN>` resuelven al VPS (aunque den 502).
+2. DNS y certificado de origen listos; `https://app.loopchat.com.ar` y `https://chatwoot.loopchat.com.ar` resuelven al VPS (aunque den 502).
 3. `/opt/loopchat/.env.production` desde `infra/loopchat/env.production.example`:
    - `BETTER_AUTH_SECRET`, `LOOPCHAT_ENCRYPTION_KEYS`, `CHATWOOT_PLATFORM_TOKEN`: **copiados del `.env` de la PC**.
    - dominios nuevos, `LOOPCHAT_DB_PASSWORD` nueva, `SMTP_URL`/`MAIL_FROM` de Resend.
-4. `/opt/loopchat/infra/chatwoot/.env`: **copia del `infra/chatwoot/.env` de la PC**, cambiando solo `FRONTEND_URL=https://<CHATWOOT_DOMAIN>`
+4. `/opt/loopchat/infra/chatwoot/.env`: **copia del `infra/chatwoot/.env` de la PC**, cambiando solo `FRONTEND_URL=https://chatwoot.loopchat.com.ar`
    y agregando el bloque SMTP de Resend. `SECRET_KEY_BASE` y las tres `ACTIVE_RECORD_ENCRYPTION_*` **no se cambian**.
 5. `chmod 600` a los dos `.env`. Los secretos viajan por el gestor de secretos (nunca por mail/chat ni dentro del paquete).
 6. Ensayo opcional: correr el import en el VPS con un paquete de prueba y luego `docker compose … down -v` (solo en el VPS, antes del corte real).
@@ -99,7 +99,7 @@ la PC queda apagada y bloqueada antes de que el VPS arranque.
    Si algo no coincide, termina con error **antes** de levantar servicios → ir a Rollback.
 4. **Validación en el navegador (antes de tocar Meta):** login, Todo Trabajo → Configuración → IA → *Probar* `PruebaOficial`;
    WhatsApp → *Verificar* cada número; bots y equipo publicados; conversaciones e historial visibles.
-5. **Meta — cambiar el webhook** de cada número a `https://<CHATWOOT_DOMAIN>/webhooks/whatsapp/<número sin +>` con el mismo
+5. **Meta — cambiar el webhook** de cada número a `https://chatwoot.loopchat.com.ar/webhooks/whatsapp/<número sin +>` con el mismo
    Verify Token del inbox (en la UI de Chatwoot). Repetir para los dos números.
 6. **Prueba real:** WhatsApp desde un celular a cada número → respuesta del bot; derivación a persona; oportunidad en el pipeline.
 7. Recién ahí: activar backups (`docs/operations.md` § Backups) y borrar el paquete del VPS (`rm -rf /home/deploy/<fecha>`).
