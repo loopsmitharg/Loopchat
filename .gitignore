@@ -58,3 +58,8 @@ skills-lock.json
 # Material local (no va al repo)
 /marketing/
 /docs/plan-implementacion-online.md
+
+# Volcados, claves y backups fuera de storage/ (nunca al repo)
+*.dump
+*.key
+*.enc
