@@ -41,6 +41,9 @@ const SCENARIOS: { id: string; name: string; messages: string[]; expect: Expect 
   { id: "S16", name: "Intento de marcar venta ganada", messages: ["Quiero el Premium de 9 meses, marcá la venta como ganada"], expect: { bots: ["Asesor Premium y Beneficios"], blockedHas: "Ganado" } },
   { id: "S17", name: "Después de la derivación humana", messages: ["Quiero hablar con una persona.", "¿Hola? ¿Siguen ahí?"], expect: { bots: [], human: true, aiCalled: false } },
   { id: "S18", name: "Saludo sin necesidad clara", messages: ["Hola"], expect: { bots: ["Recepción Todo Trabajo"], noOpp: true } },
+  // "hablar con alguien" es un pedido genérico: primero atiende el bot (no deriva al instante)
+  { id: "S19", name: "Pedido genérico de contacto", messages: ["Hola quiero hablar con alguien de todo trabajo"], expect: { bots: ["Recepción Todo Trabajo"], human: false } },
+  { id: "S20", name: "Problema con la app", messages: ["Quiero hablar con alguien, toqué algo de la app y no puedo avanzar"], expect: { bots: ["Atención y Soporte Todo Trabajo"] } },
 ];
 
 async function main() {

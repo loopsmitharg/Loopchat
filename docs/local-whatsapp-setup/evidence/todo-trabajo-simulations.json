@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-22T00:38:23.218Z",
+  "generatedAt": "2026-11-23T00:21:41.239Z",
   "ai": "IA SIMULADA del simulador de Loopchat (determinista; no es un modelo real)",
   "teamId": "d0fa0190-2497-4473-8332-87a434de1e74",
   "results": [
@@ -29,7 +29,7 @@
           "previousBot": "Recepción Todo Trabajo",
           "transfer": [
             {
-              "reason": "Palabra clave (Palabras: trabajo, empleo, empleos…)",
+              "reason": "Palabra clave (Palabras: busco trabajo, buscar trabajo, conseguir trabajo…)",
               "kind": "keyword"
             }
           ],
@@ -54,7 +54,7 @@
         },
         {
           "kind": "action",
-          "text": "Derivación interna: Recepción Todo Trabajo → Asesor de Empleos (Palabra clave (Palabras: trabajo, empleo, empleos…))"
+          "text": "Derivación interna: Recepción Todo Trabajo → Asesor de Empleos (Palabra clave (Palabras: busco trabajo, buscar trabajo, conseguir trabajo…))"
         },
         {
           "kind": "system",
@@ -692,7 +692,7 @@
           "previousBot": "Recepción Todo Trabajo",
           "transfer": [
             {
-              "reason": "Palabra clave (Palabras: no me figura, no figura, no me aparece…)",
+              "reason": "Palabra clave (Palabras: no puedo avanzar, no puedo seguir, toque algo…)",
               "kind": "keyword"
             }
           ],
@@ -716,7 +716,7 @@
         },
         {
           "kind": "action",
-          "text": "Derivación interna: Recepción Todo Trabajo → Atención y Soporte Todo Trabajo (Palabra clave (Palabras: no me figura, no figura, no me aparece…))"
+          "text": "Derivación interna: Recepción Todo Trabajo → Atención y Soporte Todo Trabajo (Palabra clave (Palabras: no puedo avanzar, no puedo seguir, toque algo…))"
         },
         {
           "kind": "system",
@@ -768,7 +768,7 @@
           "previousBot": null,
           "transfer": [
             {
-              "reason": "Palabra clave (Palabras: hablar con una persona, hablar con alguien, hablar con un humano…)",
+              "reason": "Palabra clave (Palabras: hablar con una persona, hablar con un humano, humano…)",
               "kind": "keyword"
             }
           ],
@@ -792,7 +792,7 @@
         },
         {
           "kind": "action",
-          "text": "Derivaría a una persona: Palabra clave (Palabras: hablar con una persona, hablar con alguien, hablar con un humano…)"
+          "text": "Derivaría a una persona: Palabra clave (Palabras: hablar con una persona, hablar con un humano, humano…)"
         },
         {
           "kind": "bot",
@@ -800,7 +800,7 @@
         },
         {
           "kind": "action",
-          "text": "Derivaría a una persona (Derivación del equipo de bots): Palabra clave (Palabras: hablar con una persona, hablar con alguien, hablar con un humano…)"
+          "text": "Derivaría a una persona (Derivación del equipo de bots): Palabra clave (Palabras: hablar con una persona, hablar con un humano, humano…)"
         },
         {
           "kind": "action",
@@ -901,7 +901,7 @@
         },
         {
           "kind": "system",
-          "text": "Productos consultados: Suite CV: Carta de presentación con IA (1 crédito) (precio: no informado; stock: sin especificar) · Suite CV: Generador de CV corregido en PDF formato Harvard (5 créditos) (precio: no informado; stock: sin especificar) · Suite CV: CV Quality & Job Match con IA (1 crédito) (precio: no informado; stock: sin especificar) · Suite CV: ATS Check (diagnóstico técnico) (precio: no informado; stock: sin especificar) · Servicio: Profesionalización y Armado de CV en Formato ATS (precio: no informado; stock: sin especificar)"
+          "text": "Productos consultados: Suite CV: ATS Check (diagnóstico técnico) (precio: no informado; stock: sin especificar) · Suite CV: Carta de presentación con IA (1 crédito) (precio: no informado; stock: sin especificar) · Suite CV: Generador de CV corregido en PDF formato Harvard (5 créditos) (precio: no informado; stock: sin especificar) · Suite CV: CV Quality & Job Match con IA (1 crédito) (precio: no informado; stock: sin especificar) · Servicio: Profesionalización y Armado de CV en Formato ATS (precio: no informado; stock: sin especificar)"
         },
         {
           "kind": "action",
@@ -909,7 +909,7 @@
         },
         {
           "kind": "bot",
-          "text": "(IA simulada · trato: vos) Tenemos Suite CV: Carta de presentación con IA (1 crédito): no tengo el precio cargado; si querés lo consulto con el equipo."
+          "text": "(IA simulada · trato: vos) Tenemos Suite CV: ATS Check (diagnóstico técnico): no tengo el precio cargado; si querés lo consulto con el equipo."
         },
         {
           "kind": "user",
@@ -1156,7 +1156,7 @@
           "previousBot": "Recepción Todo Trabajo",
           "transfer": [
             {
-              "reason": "Palabra clave (Palabras: no me figura, no figura, no me aparece…)",
+              "reason": "Palabra clave (Palabras: no puedo avanzar, no puedo seguir, toque algo…)",
               "kind": "keyword"
             }
           ],
@@ -1180,7 +1180,7 @@
         },
         {
           "kind": "action",
-          "text": "Derivación interna: Recepción Todo Trabajo → Atención y Soporte Todo Trabajo (Palabra clave (Palabras: no me figura, no figura, no me aparece…))"
+          "text": "Derivación interna: Recepción Todo Trabajo → Atención y Soporte Todo Trabajo (Palabra clave (Palabras: no puedo avanzar, no puedo seguir, toque algo…))"
         },
         {
           "kind": "system",
@@ -1291,7 +1291,7 @@
           "previousBot": "Recepción Todo Trabajo",
           "transfer": [
             {
-              "reason": "Palabra clave (Palabras: no me figura, no figura, no me aparece…)",
+              "reason": "Palabra clave (Palabras: no puedo avanzar, no puedo seguir, toque algo…)",
               "kind": "keyword"
             }
           ],
@@ -1322,7 +1322,7 @@
         },
         {
           "kind": "action",
-          "text": "Derivación interna: Recepción Todo Trabajo → Atención y Soporte Todo Trabajo (Palabra clave (Palabras: no me figura, no figura, no me aparece…))"
+          "text": "Derivación interna: Recepción Todo Trabajo → Atención y Soporte Todo Trabajo (Palabra clave (Palabras: no puedo avanzar, no puedo seguir, toque algo…))"
         },
         {
           "kind": "system",
@@ -1487,7 +1487,7 @@
           "previousBot": null,
           "transfer": [
             {
-              "reason": "Palabra clave (Palabras: hablar con una persona, hablar con alguien, hablar con un humano…)",
+              "reason": "Palabra clave (Palabras: hablar con una persona, hablar con un humano, humano…)",
               "kind": "keyword"
             }
           ],
@@ -1525,7 +1525,7 @@
         },
         {
           "kind": "action",
-          "text": "Derivaría a una persona: Palabra clave (Palabras: hablar con una persona, hablar con alguien, hablar con un humano…)"
+          "text": "Derivaría a una persona: Palabra clave (Palabras: hablar con una persona, hablar con un humano, humano…)"
         },
         {
           "kind": "bot",
@@ -1533,7 +1533,7 @@
         },
         {
           "kind": "action",
-          "text": "Derivaría a una persona (Derivación del equipo de bots): Palabra clave (Palabras: hablar con una persona, hablar con alguien, hablar con un humano…)"
+          "text": "Derivaría a una persona (Derivación del equipo de bots): Palabra clave (Palabras: hablar con una persona, hablar con un humano, humano…)"
         },
         {
           "kind": "action",
@@ -1608,6 +1608,160 @@
       "opportunities": [],
       "providedToAi": {
         "knowledge": [],
+        "catalog": []
+      }
+    },
+    {
+      "id": "S19",
+      "name": "Pedido genérico de contacto",
+      "verdict": "PASS",
+      "note": null,
+      "checks": [
+        {
+          "check": "bots que responden = [\"Recepción Todo Trabajo\"]",
+          "ok": true
+        },
+        {
+          "check": "deriva a una persona",
+          "ok": true
+        }
+      ],
+      "turns": [
+        {
+          "message": "Hola quiero hablar con alguien de todo trabajo",
+          "activeBot": "Recepción Todo Trabajo",
+          "previousBot": null,
+          "transfer": [],
+          "aiCalled": true,
+          "routeAi": true,
+          "tools": [
+            "classify",
+            "use_knowledge"
+          ],
+          "blocked": [
+            "create_opportunity: herramienta no habilitada"
+          ],
+          "handoff": null,
+          "pipeline": "A · Consultas comerciales Premium",
+          "stage": null,
+          "actions": [
+            "Acción bloqueada: create_opportunity: herramienta no habilitada"
+          ]
+        }
+      ],
+      "events": [
+        {
+          "kind": "user",
+          "text": "Hola quiero hablar con alguien de todo trabajo"
+        },
+        {
+          "kind": "system",
+          "text": "Clasificación con IA simulada: sin proveedor real no se puede determinar el área (en producción se usaría la IA de la empresa)."
+        },
+        {
+          "kind": "system",
+          "text": "IA simulada (sin llamar al proveedor)"
+        },
+        {
+          "kind": "system",
+          "text": "Conocimiento usado: Todo Trabajo — Información institucional"
+        },
+        {
+          "kind": "blocked",
+          "text": "Acción bloqueada: create_opportunity: herramienta no habilitada"
+        },
+        {
+          "kind": "bot",
+          "text": "(IA simulada · trato: vos, muy breve, sin vender) Respuesta para: \"Hola quiero hablar con alguien de todo trabajo\""
+        }
+      ],
+      "opportunities": [],
+      "providedToAi": {
+        "knowledge": [
+          "# Dossier Empresarial y Comercial — Todo Trabajo\n\n> **Identidad corporativa:** Conectando profesionales con oportunidades reales desde 2010.\n> **Mercado princip"
+        ],
+        "catalog": []
+      }
+    },
+    {
+      "id": "S20",
+      "name": "Problema con la app",
+      "verdict": "PASS",
+      "note": null,
+      "checks": [
+        {
+          "check": "bots que responden = [\"Atención y Soporte Todo Trabajo\"]",
+          "ok": true
+        }
+      ],
+      "turns": [
+        {
+          "message": "Quiero hablar con alguien, toqué algo de la app y no puedo avanzar",
+          "activeBot": "Atención y Soporte Todo Trabajo",
+          "previousBot": "Recepción Todo Trabajo",
+          "transfer": [
+            {
+              "reason": "Palabra clave (Palabras: no puedo avanzar, no puedo seguir, toque algo…)",
+              "kind": "keyword"
+            }
+          ],
+          "aiCalled": true,
+          "routeAi": false,
+          "tools": [
+            "classify",
+            "use_knowledge",
+            "create_opportunity"
+          ],
+          "blocked": [],
+          "handoff": null,
+          "pipeline": "D · Atención y Soporte",
+          "stage": "Nuevo caso",
+          "actions": [
+            "Crearía oportunidad \"Quiero hablar con alguien, toqué algo de la app y no puedo a\" en etapa \"Nuevo caso\" (pipeline \"D · Atención y Soporte\")"
+          ]
+        }
+      ],
+      "events": [
+        {
+          "kind": "user",
+          "text": "Quiero hablar con alguien, toqué algo de la app y no puedo avanzar"
+        },
+        {
+          "kind": "action",
+          "text": "Derivación interna: Recepción Todo Trabajo → Atención y Soporte Todo Trabajo (Palabra clave (Palabras: no puedo avanzar, no puedo seguir, toque algo…))"
+        },
+        {
+          "kind": "system",
+          "text": "IA simulada (sin llamar al proveedor)"
+        },
+        {
+          "kind": "system",
+          "text": "Conocimiento usado: Todo Trabajo — CV, ATS y herramientas de IA, Todo Trabajo — Empleos, postulaciones y canal de difusión, Todo Trabajo — Empresas y reclutamiento (B2B), Todo Trabajo — Directorio de profesionales independientes"
+        },
+        {
+          "kind": "action",
+          "text": "Crearía oportunidad \"Quiero hablar con alguien, toqué algo de la app y no puedo a\" en etapa \"Nuevo caso\" (pipeline \"D · Atención y Soporte\")"
+        },
+        {
+          "kind": "bot",
+          "text": "(IA simulada · trato: vos, sin vender) Respuesta para: \"Quiero hablar con alguien, toqué algo de la app y no puedo avanzar\""
+        }
+      ],
+      "opportunities": [
+        {
+          "stageId": "6e20da3d-7c38-4767-8ca2-2a1e0f94da97",
+          "title": "Quiero hablar con alguien, toqué algo de la app y no puedo a",
+          "stageName": "Nuevo caso",
+          "pipelineName": "D · Atención y Soporte"
+        }
+      ],
+      "providedToAi": {
+        "knowledge": [
+          "### 2.3. Suite Tecnológica: Analizador de CV con ATS e Inteligencia Artificial\nPlataforma propietaria basada en **créditos prepagos** para el diagnóstico, mejor",
+          "### 3.2. Motor de Búsqueda y Filtros Avanzados\n- **Filtros dinámicos:** Palabra clave, ubicación libre, área laboral, categoría, provincia (24 jurisdicciones ar",
+          "- **Alta y Gestión de Perfil Corporativo:** Registro de razón social/nombre comercial, CUIT, descripción institucional, ubicación exacta y canales de contacto.\n",
+          "## 5. Directorio de Servicios Profesionales Independientes\n\nUn mercado interno (*marketplace* de servicios sin comisiones de intermediación) donde los candidato"
+        ],
         "catalog": []
       }
     }

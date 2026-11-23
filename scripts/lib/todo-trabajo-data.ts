@@ -62,12 +62,14 @@ export const COMPANY_RULES: Rule[] = [
   { text: "Sitio oficial: https://todotrabajo.net. Invitá a entrar para registrarse, ver y postularse a ofertas, conocer los planes Premium o sumarse al directorio, cuando ayude a la consulta (no en cada mensaje).", category: "other" },
   { text: "Formato WhatsApp: párrafos cortos (1 o 2 oraciones) separados por una línea en blanco. Opciones o pasos: un ítem por línea, con •. *Negrita* solo para precios o nombres de servicios. Nunca un bloque de texto largo ni más de 3 párrafos.", category: "sales_conduct" },
   { text: "No revelar información de otros candidatos, empresas o usuarios, ni datos internos, métricas o credenciales de Todo Trabajo.", category: "privacy" },
-  { text: "Si la persona pide hablar con alguien del equipo, o la consulta requiere una operación administrativa, derivar a una persona sin insistir.", category: "handoff" },
+  { text: "Ante un pedido genérico (\"quiero hablar con alguien\") primero preguntá en qué podés ayudar e intentá resolverlo. Derivá a una persona si la pide de forma explícita, si insiste o si hace falta una operación administrativa.", category: "handoff" },
   { text: "Tratar al cliente de vos, con respuestas breves para WhatsApp, sin presión comercial. No dar información que no esté en el conocimiento o el catálogo: si no se sabe, decirlo y ofrecer derivar.", category: "sales_conduct" },
 ];
 
 /** Reglas reemplazadas: el script las borra si siguen cargadas. */
-export const OBSOLETE_RULES = ["No pedir que envíen el CV ni documentación por WhatsApp: el análisis de CV se hace cargándolo en la Suite CV de la plataforma."];
+export const OBSOLETE_RULES = [
+  "Si la persona pide hablar con alguien del equipo, o la consulta requiere una operación administrativa, derivar a una persona sin insistir.",
+  "No pedir que envíen el CV ni documentación por WhatsApp: el análisis de CV se hace cargándolo en la Suite CV de la plataforma."];
 
 /* ------------------------------------------------------------------ */
 /* Conocimiento: documentos temáticos con texto LITERAL del dossier     */
@@ -163,11 +165,12 @@ Incluye:
 
 ¿Querés que te cuente cómo activarlo?
 
-DERIVAR A UNA PERSONA: solo si el cliente lo pide, si acepta tu ofrecimiento de que lo contacten, o si hace falta verificar un pago, una cuenta o un saldo y el cliente lo necesita. Si ofrecés el contacto, primero preguntá y esperá la respuesta.`;
+DERIVAR A UNA PERSONA: solo si el cliente lo pide, si acepta tu ofrecimiento de que lo contacten, o si hace falta verificar un pago, una cuenta o un saldo y el cliente lo necesita. Si ofrecés el contacto, primero preguntá y esperá la respuesta. Nunca hagas una pregunta y derives en el mismo mensaje: si preguntás, no derives. "Quiero hablar con alguien" sin más detalle es un pedido de ayuda, no de una persona.`;
 
 export const TRANSFER_MESSAGE = "Te paso con una persona del equipo de Todo Trabajo para que lo revise. Te van a responder por este mismo chat. 🙌";
 // el runtime compara por SUBCADENA: frases completas para no derivar por "recursos humanos" u "operadores"
-export const HANDOFF_KEYWORDS = ["hablar con una persona", "hablar con alguien", "hablar con un humano", "atencion humana", "persona real", "un operador", "una operadora", "asesor humano"];
+// "hablar con alguien" NO deriva: suele ser un pedido genérico de ayuda; primero atiende el bot
+export const HANDOFF_KEYWORDS = ["hablar con una persona", "hablar con un humano", "atencion humana", "persona real", "un operador", "una operadora", "asesor humano"];
 
 /** Configuración común (cada bot la ajusta). Límites de consumo pensados para WhatsApp. */
 const common = (): BotConfigPatch => ({
@@ -362,13 +365,14 @@ Cómo actuar:
 
 /** Frases que llevan a cada especialista desde la recepción (amplias). Sin tildes no hace falta: se normaliza. */
 export const ENTRY_KEYWORDS: Record<Exclude<BotKey, "recepcion"> | "human", string[]> = {
-  human: ["hablar con una persona", "hablar con alguien", "hablar con un humano", "humano", "operador", "operadora", "atencion humana", "persona real", "asesor humano"],
-  soporte: ["no me figura", "no figura", "no me aparece", "no aparece", "no se refleja", "no se acredito", "no me acreditaron", "no se acreditaron", "no puedo entrar", "no puedo ingresar", "no me deja", "olvide mi contraseña", "contraseña", "reclamo", "queja", "problema", "error", "no funciona", "no anda", "me cobraron", "cobro", "reintegro", "reembolso", "creditos incorrectos", "me descontaron", "dni", "cbu"],
+  human: ["hablar con una persona", "hablar con un humano", "humano", "operador", "operadora", "atencion humana", "persona real", "asesor humano"],
+  soporte: ["no puedo avanzar", "no puedo seguir", "toque algo", "no me figura", "no figura", "no me aparece", "no aparece", "no se refleja", "no se acredito", "no me acreditaron", "no se acreditaron", "no puedo entrar", "no puedo ingresar", "no me deja", "olvide mi contraseña", "contraseña", "reclamo", "queja", "problema", "error", "no funciona", "no anda", "me cobraron", "cobro", "reintegro", "reembolso", "creditos incorrectos", "me descontaron", "dni", "cbu"],
   empresas: ["mi empresa", "una empresa", "tengo una empresa", "contratar personal", "busqueda de personal", "publicar una busqueda", "publicar una oferta", "publicar un aviso", "publicar ofertas", "reclutador", "reclutadora", "reclutamiento", "necesito personal", "busco personal", "recursos humanos", "rrhh", "mini ats", "empleador", "postulantes", "candidatos", "publicacion asistida"],
   profesionales: ["ofrecer mis servicios", "ofrecer servicios", "ofrezco mis servicios", "ofrezco servicios", "directorio", "profesional independiente", "trabajo independiente", "matricula", "mi oficio", "portafolio", "soy electricista", "soy plomero", "soy gasista", "soy carpintero", "soy albañil", "soy pintor", "soy abogado", "soy abogada", "soy contador", "soy contadora", "soy fotografo", "soy jardinero", "soy mecanico", "soy herrero", "soy psicologo", "soy psicologa", "soy nutricionista", "soy enfermera", "soy enfermero", "soy niñera"],
   premium: ["premium", "suscripcion", "suscribirme", "plan", "planes", "referido", "referidos", "invite", "invitar", "puntos", "codigo de referido", "canje", "canjear", "descuento", "beneficios", "sorteo", "sorteos", "vip", "renovar", "invita y gana"],
   cv: ["cv", "curriculum", "curriculo", "ats", "linkedin", "harvard", "carta de presentacion", "cartas de presentacion", "creditos", "credito", "job match", "cv quality", "analisis de cv", "escaneo"],
-  empleos: ["trabajo", "empleo", "empleos", "busco trabajo", "oferta laboral", "ofertas laborales", "ofertas de trabajo", "vacante", "vacantes", "postular", "postularme", "postulacion", "postulaciones", "busqueda laboral", "entrevista", "part time", "full time", "canal de difusion"],
+  // sin "trabajo" suelto: aparece en el nombre de la empresa ("Todo Trabajo")
+  empleos: ["busco trabajo", "buscar trabajo", "conseguir trabajo", "un trabajo", "quiero trabajar", "empleo", "empleos", "oferta laboral", "ofertas laborales", "ofertas de trabajo", "vacante", "vacantes", "postular", "postularme", "postulacion", "postulaciones", "busqueda laboral", "entrevista", "part time", "full time", "canal de difusion"],
 };
 
 /**

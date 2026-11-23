@@ -73,6 +73,18 @@ describe("motor de derivación", () => {
     expect(calls).toBe(1);
   });
 
+  it("la IA no elige una derivación a persona por palabras clave (solo la palabra clave la activa)", async () => {
+    let offered: string[] = [];
+    const ai = async ({ options }: { options: { label: string }[] }) => {
+      offered = options.map((o) => o.label);
+      return { index: null };
+    };
+    const r = await routeTeamMessage(input(graph(), "quiero hablar con el equipo de la empresa", { aiClassify: ai }));
+    expect(offered.length).toBeGreaterThan(0);
+    expect(offered.some((l) => l.includes("hablar con alguien"))).toBe(false);
+    expect(r.toHuman).toBe(false);
+  });
+
   it("límite de derivaciones seguidas y racha previa", async () => {
     const g = graph({ settings: { entryNodeId: "rec", unknownIntent: "stay", maxConsecutiveTransfers: 2, fallback: "entry" } });
     const r = await routeTeamMessage(input(g, "precio", { streak: 2 }));

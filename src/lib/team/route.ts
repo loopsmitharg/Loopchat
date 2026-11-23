@@ -98,7 +98,9 @@ export async function routeTeamMessage(input: RouteInput): Promise<RouteResult> 
     // 3) IA: solo en el primer paso, si el mensaje no es trivial y las reglas no alcanzaron
     if (!match && guard === 0 && !det.trivial && input.aiClassify && out.length) {
       const isRouter = cur === entry || input.roleOf(cur) === "receptionist";
-      const candidates = isRouter ? out : out.filter((e) => e.data.condition.kind === "ai");
+      // una derivación a persona por palabras clave es determinística: la IA no la infiere ("hablar con alguien"
+      // no es pedir una persona); el bot igual puede derivar con su propia regla de IA si el cliente insiste
+      const candidates = (isRouter ? out : out.filter((e) => e.data.condition.kind === "ai")).filter((e) => !(byId.get(e.target)?.type === "human" && e.data.condition.kind === "keywords"));
       if (candidates.length) {
         const options = candidates.map((e, i) => ({ index: i + 1, edgeId: e.id, label: edgeLabel(e, input.nameOf) }));
         const r = await input.aiClassify({ nodeId: cur, message: input.message, options });
