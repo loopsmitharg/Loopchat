@@ -4,6 +4,7 @@ process.env.DATABASE_URL = process.env.TEST_DATABASE_URL ?? "postgres://loopchat
 process.env.BETTER_AUTH_SECRET = "test-only-secret-0123456789abcdef0123456789";
 process.env.LOOPCHAT_ENCRYPTION_KEYS = "t2:" + Buffer.alloc(32, 2).toString("base64") + ",t1:" + Buffer.alloc(32, 1).toString("base64");
 process.env.APP_URL = "http://localhost:3000";
+process.env.SMTP_URL = ""; // nunca enviar correo real desde los tests, aunque el .env local tenga Resend
 process.env.LOOPCHAT_ALLOW_PRIVATE_URLS = "true";
 process.env.LOOPCHAT_INLINE_WORKER = "false";
 process.env.DISABLE_RATE_LIMIT = "true";

@@ -8,7 +8,7 @@ const DB = process.env.E2E_DATABASE_URL ?? "postgres://loopchat:loopchat@localho
 setup("base E2E reproducible: esquema, datos DEMO y simuladores", async ({ request }) => {
   setup.setTimeout(180_000);
   await resetDatabase(DB);
-  const env = { ...process.env, DATABASE_URL: DB, CHATWOOT_BASE_URL: "http://localhost:3011", CHATWOOT_PLATFORM_TOKEN: "sim-platform-token", CHATWOOT_WEBHOOK_TARGET_URL: `http://localhost:${PORT}`, META_GRAPH_BASE_URL: "http://localhost:3011/meta-graph/v22.0", LOOPCHAT_ALLOW_PRIVATE_URLS: "true", LOOPCHAT_INLINE_WORKER: "false", NODE_ENV: "development" } as NodeJS.ProcessEnv;
+  const env = { ...process.env, DATABASE_URL: DB, CHATWOOT_BASE_URL: "http://localhost:3011", CHATWOOT_PLATFORM_TOKEN: "sim-platform-token", CHATWOOT_WEBHOOK_TARGET_URL: `http://localhost:${PORT}`, META_GRAPH_BASE_URL: "http://localhost:3011/meta-graph/v22.0", LOOPCHAT_ALLOW_PRIVATE_URLS: "true", LOOPCHAT_INLINE_WORKER: "false", NODE_ENV: "development", SMTP_URL: "" } as NodeJS.ProcessEnv;
   execSync("npx tsx scripts/migrate.ts", { env, stdio: "inherit" });
   execSync("npx tsx --conditions=react-server scripts/seed-demo.ts", { env, stdio: "ignore" });
   await request.post("http://localhost:3011/__sim/reset");

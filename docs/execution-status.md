@@ -1,6 +1,6 @@
 # Estado de ejecución — Loopchat V1
 
-**Última actualización:** 2026-11-23 (Fase 1 de despliegue: preparación para VPS; ver sección "Preparación para VPS") · **Agente:** implementación autónoma (Claude) · **Entorno de verificación:** Linux (Node 22, PostgreSQL 16, Chromium 1194), sin acceso a Docker Hub, Meta ni proveedores de IA reales.
+**Última actualización:** 2026-11-24 (Resend real y superadmin; ver sección "Resend real y superadmin") · **Agente:** implementación autónoma (Claude) · **Entorno de verificación:** Linux (Node 22, PostgreSQL 16, Chromium 1194), sin acceso a Docker Hub, Meta ni proveedores de IA reales.
 
 Leyenda: `IMPLEMENTED` código completo · `VERIFIED_LOCAL` pruebas locales automatizadas pasan · `VERIFIED_REAL` probado contra servicios reales · `BLOCKED_EXTERNAL` depende de acceso externo · `NOT_DONE` no realizado.
 
@@ -44,6 +44,27 @@ Sin despliegue: todavía no hay VPS, dominio confirmado ni cuenta de Resend. Pro
 Comandos: `npm run typecheck` PASS · `npm run lint` PASS (se excluyen `.agents/` y `.claude/`) · `npm test` 270/271 en la corrida con el build de Docker en paralelo; el que falló (`engine-reliability`, umbral de 1500 ms, midió 1897 ms) pasa 16/16 repetido solo · audit vitest 16 PASS / 2 skipped (requieren Chatwoot real) · build de producción dentro de la imagen PASS.
 No ejecutado: E2E Playwright y sondas HTTP de aislamiento (corren en CI), `chatwoot-real.audit` (requiere Chatwoot real configurado para el test), pruebas con Meta, IA y Resend reales.
 
+## Resend real y superadmin (2026-11-24) — rama `fix/loopchat-production-readiness`
+
+Dominio `loopchat.com.ar` verificado en Resend (São Paulo). Remitente `Loopchat <no-reply@loopchat.com.ar>`. La API key está
+solo en los `.env` privados de la PC (`.env` → `SMTP_URL`; `infra/chatwoot/.env` → `SMTP_PASSWORD`); nunca se imprimió.
+
+| Prueba | Estado | Evidencia (id de Resend) |
+|---|---|---|
+| A · SMTP de Loopchat (`SMTP_URL`, 465 TLS implícito, nodemailer como la app) → cargerich8@gmail.com | VERIFIED_REAL: aceptado y **delivered** | `01a20fd4-831d-73fb-a7b0-5c1c85144440` |
+| E · parámetros SMTP de Chatwoot (587 STARTTLS, `plain`, usuario `resend`, verificación `peer`) desde Node | VERIFIED_REAL: delivered | `01a20fd4-8fad-7d27-808c-813c733b3737` |
+| E · envío desde Chatwoot mismo | **PENDIENTE**: los contenedores locales se crearon sin SMTP y recrearlos reinicia el entorno local | primer reset del superadmin de Chatwoot en el VPS |
+| B · superadmin `cargerich8@gmail.com` con `bootstrap:admin` | VERIFIED_LOCAL: `platform_admin`, 0 membresías, 1 solo usuario con ese email; login y API de plataforma 200 (en copia aislada) | se activa por recuperación de contraseña (bootstrap no envía mail) |
+| C · recuperación de contraseña real (copia aislada, `APP_URL=https://app.loopchat.com.ar`) | VERIFIED_REAL el envío: delivered; enlace absoluto `https://app.loopchat.com.ar/api/auth/reset-password/<token>?callbackURL=%2Frestablecer%2Fnueva`, vence en 30 min. **Enlace PENDIENTE** (el dominio todavía no apunta a un servidor; el token era de la copia, ya borrada) | `01a20fe2-88b2-7c9d-b7c2-30d01c35b1f9` |
+| D · invitación desde /admin (copia aislada, empresa DEMO, rol lectura) | VERIFIED_REAL el envío: delivered; enlace `https://app.loopchat.com.ar/invitacion/<token>`, vence en 7 días, sin `devUrl` en la respuesta. **Enlace PENDIENTE** (misma razón) | `01a20fe2-8201-78ed-8d86-93f7722e7327` |
+
+Correcciones: en el `.env` privado `SMTP_URL` tenía el puerto `46` (debía ser `465`) y `MAIL_FROM=no-reply@localhost`;
+se quitó una variable `Resend=` que el código no usa (la clave ya estaba en `SMTP_URL`). `infra/chatwoot/.env` no tenía SMTP.
+`sendMail` ahora registra la respuesta SMTP del proveedor (incluye el id de Resend) y, si falla, `mail.failed` con código y
+respuesta del servidor, nunca `SMTP_URL`. Sin reintentos automáticos de envío: cada pedido genera un solo mail.
+
+Efecto local: con el `.env` nuevo, la app local (si se vuelve a levantar) envía correos reales por Resend.
+
 ## Cierre de la Fase 1 (2026-11-23, noche) — rama `fix/loopchat-production-readiness`
 
 | Área | Estado | Evidencia |
@@ -54,7 +75,7 @@ No ejecutado: E2E Playwright y sondas HTTP de aislamiento (corren en CI), `chatw
 | Playwright local (escritorio 1440, móvil 390, axe-core) con `CI=true` | VERIFIED_LOCAL 27/27 | corrida completa 26/27; `bot-teams.spec` falló por tiempo (compilación bajo demanda de `next dev` en Windows) y pasa sola (42 s) |
 | Unit + integración local | VERIFIED_LOCAL 272/272 | `npm test` |
 | Exclusión de secretos | VERIFIED_LOCAL | `.env*`, `infra/chatwoot/.env`, `storage/` (backups, migración, contraseña local), `*.pem`, `marketing/`, skills locales ignorados; se agregan `*.dump`, `*.key`, `*.enc`. `git ls-files` sin archivos sensibles |
-| Dominios | Configurados | `app.loopchat.com.ar`, `chatwoot.loopchat.com.ar`, remitente `no-reply@notify.loopchat.com.ar`. DNS: el dominio usa nameservers de Cloudflare; los tres subdominios todavía no tienen registros |
+| Dominios | Configurados | `app.loopchat.com.ar`, `chatwoot.loopchat.com.ar`, remitente `no-reply@loopchat.com.ar` (actualizado el 2026-11-24). DNS: el dominio usa nameservers de Cloudflare; los tres subdominios todavía no tienen registros |
 | Checklist de cuentas de prueba | IMPLEMENTED (no ejecutado: es para el VPS) | `docs/correccion-cuentas-demo.md` |
 
 **Medición de recursos** (Docker Desktop, entorno real local + imagen de producción de Loopchat con base vacía, después de recorrer las pantallas):

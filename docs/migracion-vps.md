@@ -21,9 +21,9 @@ Herramientas (en el repo):
 
 **A. Lo que aportan ustedes**
 - [ ] VPS Ubuntu 24.04, **4 vCPU / 8 GB RAM / ≥ 80 GB SSD** + 2 GB de swap, acceso SSH con clave (medición: ~1,4 GB en uso con todo levantado; ver `docs/execution-status.md`, cierre de Fase 1).
-- [x] Dominios confirmados: `app.loopchat.com.ar` (Loopchat), `chatwoot.loopchat.com.ar` (Chatwoot); correo desde `notify.loopchat.com.ar`.
+- [x] Dominios confirmados: `app.loopchat.com.ar` (Loopchat), `chatwoot.loopchat.com.ar` (Chatwoot); correo desde `no-reply@loopchat.com.ar`.
 - [ ] Cloudflare: registros A (proxied) y un *Origin Certificate* para ambos dominios; SSL/TLS en **Full (strict)**.
-- [ ] Resend: dominio de envío `notify.loopchat.com.ar` verificado (registros SPF/DKIM/MX que indique Resend, en Cloudflare), **una API key** con permiso solo de envío; remitente `no-reply@notify.loopchat.com.ar`.
+- [x] Resend: dominio `loopchat.com.ar` verificado (región São Paulo); la API key está en el `.env` privado de la PC y se copia al VPS por el gestor de secretos. Remitente `Loopchat <no-reply@loopchat.com.ar>`.
 - [ ] Destino de alertas: `ALERT_EMAIL` y/o `ALERT_WEBHOOK_URL`.
 - [ ] Bucket externo para backups (R2 o B2) + credenciales de `rclone`; par de claves RSA de backup (la privada fuera del servidor).
 - [ ] Gestor de secretos con: `.env` local, `infra/chatwoot/.env` local, API key de Resend, claves de backup.

@@ -3,7 +3,7 @@
 Se hace **en el VPS, después del corte** (paso F de `docs/migracion-vps.md`) y **antes** de borrar las empresas DEMO.
 Requisito: Resend ya configurado en Loopchat y en Chatwoot (los tres pasos terminan con un email de restablecer contraseña real).
 
-Estado relevado en la base local (2026-11-23):
+Estado relevado en la base local (2026-11-23; superadmin real agregado el 2026-11-24):
 
 | Cuenta | Dónde | Problema |
 |---|---|---|
@@ -34,13 +34,13 @@ PSQL="$LC exec -T db psql -U loopchat -d loopchat -v ON_ERROR_STOP=1"
 
 ## 1. Superadmin real de Loopchat y baja del de demo
 
-- [ ] Crear el superadmin real (la contraseña se pide por teclado: no queda en el historial ni en `.env`):
-  ```bash
-  read -rp "Email: " E; read -rsp "Contraseña (mín. 10): " P; echo
-  $LC run --rm -T -e BOOTSTRAP_ADMIN_EMAIL="$E" -e BOOTSTRAP_ADMIN_PASSWORD="$P" app npm run bootstrap:admin; unset P
-  ```
-- [ ] Entrar a `https://app.loopchat.com.ar/admin` con la cuenta nueva y ver las empresas.
-- [ ] Probar *¿Olvidaste tu contraseña?* con la cuenta nueva → llega el mail desde `notify.loopchat.com.ar`.
+- [x] Superadmin real **`cargerich8@gmail.com` ya creado** en la base local (2026-11-24, `npm run bootstrap:admin`) con
+  `platform_admin` y sin membresías; llega al VPS con la migración. Se creó con una contraseña aleatoria que nadie conoce:
+  **se activa eligiendo la contraseña propia por "¿Olvidaste tu contraseña?"**. Bootstrap no envía mails.
+  (Para crear otro: `$LC run --rm -T -e BOOTSTRAP_ADMIN_EMAIL=… -e BOOTSTRAP_ADMIN_PASSWORD="$(openssl rand -base64 24)" app npm run bootstrap:admin`
+  y activarlo igual, por recuperación.)
+- [ ] Activar: `https://app.loopchat.com.ar/restablecer` → `cargerich8@gmail.com` → mail de `no-reply@loopchat.com.ar`
+  (el enlace vence en 30 min) → contraseña nueva → entrar a `https://app.loopchat.com.ar/admin` y ver las empresas.
 - [ ] Recién entonces, dar de baja la de demo (no tiene membresías; solo se pierde su autoría en la auditoría):
   ```bash
   $PSQL -c "delete from \"user\" where email = 'plataforma@demo.loopchat.test'"

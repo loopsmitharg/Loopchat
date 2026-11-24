@@ -15,8 +15,17 @@ export async function sendMail(mail: Mail) {
   const smtp = process.env.SMTP_URL;
   if (smtp) {
     const transport = nodemailer.createTransport(smtp);
-    await transport.sendMail({ from: process.env.MAIL_FROM ?? "Loopchat <no-reply@localhost>", to: mail.to, subject: mail.subject, text: mail.text });
-    log.info("mail.sent", { to: mail.to.replace(/(.).+@/, "$1***@"), subject: mail.subject });
+    const to = mail.to.replace(/(.).+@/, "$1***@");
+    try {
+      const info = await transport.sendMail({ from: process.env.MAIL_FROM ?? "Loopchat <no-reply@localhost>", to: mail.to, subject: mail.subject, text: mail.text });
+      // la respuesta SMTP del proveedor trae su id de mensaje (Resend: "250 <id>"), útil para rastrear la entrega
+      log.info("mail.sent", { to, subject: mail.subject, smtpResponse: info.response });
+    } catch (e) {
+      // solo código y respuesta del servidor: nunca SMTP_URL (contiene la API key)
+      const err = e as { code?: string; responseCode?: number; response?: string };
+      log.error("mail.failed", { to, subject: mail.subject, code: err.code, responseCode: err.responseCode, response: err.response });
+      throw e;
+    }
     return { delivered: true as const };
   }
   if (process.env.NODE_ENV === "production") {
