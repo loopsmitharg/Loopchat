@@ -16,7 +16,8 @@ export async function login(page: Page, email: string, password = PASSWORD) {
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Contraseña").fill(password);
   await page.getByRole("button", { name: "Ingresar" }).click();
-  await expect(page).toHaveURL(/\/(dashboard|admin)/);
+  // la primera visita compila la ruta en `next dev`: margen mayor que el expect por defecto (10 s)
+  await expect(page).toHaveURL(/\/(dashboard|admin)/, { timeout: 30_000 });
 }
 
 export async function noHorizontalOverflow(page: Page) {

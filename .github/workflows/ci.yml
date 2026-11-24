@@ -52,7 +52,8 @@ jobs:
 
   e2e:
     name: E2E + aislamiento HTTP entre empresas
-    runs-on: ubuntu-latest
+    # ubuntu-latest ya migra a 26.04 y Playwright 1.56 no soporta Chromium ahí ("does not support chromium on ubuntu26.04-x64")
+    runs-on: ubuntu-24.04
     timeout-minutes: 40
     services:
       postgres:

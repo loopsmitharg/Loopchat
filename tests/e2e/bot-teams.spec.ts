@@ -19,7 +19,8 @@ test("equipos de chatbots: asistente guiado, editor visual, simulador multiagent
   await chooser.getByRole("button", { name: /Equipo de chatbots/ }).click();
 
   // asistente de 8 pasos
-  await expect(page.getByRole("heading", { name: "Nuevo equipo de chatbots" })).toBeVisible();
+  // navegación a una ruta que `next dev` compila en la primera visita
+  await expect(page.getByRole("heading", { name: "Nuevo equipo de chatbots" })).toBeVisible({ timeout: 30_000 });
   await axe(page, "asistente", problems);
   await page.getByLabel("Nombre del equipo").fill("Equipo E2E");
   await page.getByRole("button", { name: "Siguiente" }).click(); // roles
@@ -61,7 +62,7 @@ test("equipos de chatbots: asistente guiado, editor visual, simulador multiagent
   await page.getByRole("tab", { name: "Probar" }).click();
   await page.getByRole("button", { name: "Reclamo con precio" }).click();
   const activity = page.getByLabel("Actividad del equipo");
-  await expect(activity).toContainText("Soporte E2E");
+  await expect(activity).toContainText("Soporte E2E", { timeout: 30_000 }); // primera llamada al simulador compila la API
   await expect(activity).toContainText("Soporte técnico");
   await expect(activity).toContainText("Recepción E2E");
   await page.getByRole("button", { name: "Venta", exact: true }).click();
