@@ -53,6 +53,8 @@ diff <(tr -d '\r' < "$B/chatwoot-counts.txt") /tmp/cw-counts.txt && echo "Chatwo
 # credenciales cifradas (IA, Meta, Chatwoot) descifrables con LOOPCHAT_ENCRYPTION_KEYS de .env.production
 $LC run --rm -T app sh -c 'RESTORE_DATABASE_URL="$DATABASE_URL" npm run --silent verify:restore' || fail=1
 [ "$fail" = 0 ] || die "verificación fallida: NO cambiar el webhook de Meta; ver rollback en docs/migracion-vps.md"
+# antes de levantar nada público: las cuentas de demo (contraseña conocida del seed) quedan sin acceso
+$LC exec -T db psql -U loopchat -d loopchat -v ON_ERROR_STOP=1 -q < scripts/migration/secure-demo-accounts.sql
 
 say "5) Levantar servicios y re-apuntar el webhook Chatwoot → Loopchat a $APP_URL"
 $CW up -d
