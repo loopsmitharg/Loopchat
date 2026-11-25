@@ -44,6 +44,22 @@ Sin despliegue: todavía no hay VPS, dominio confirmado ni cuenta de Resend. Pro
 Comandos: `npm run typecheck` PASS · `npm run lint` PASS (se excluyen `.agents/` y `.claude/`) · `npm test` 270/271 en la corrida con el build de Docker en paralelo; el que falló (`engine-reliability`, umbral de 1500 ms, midió 1897 ms) pasa 16/16 repetido solo · audit vitest 16 PASS / 2 skipped (requieren Chatwoot real) · build de producción dentro de la imagen PASS.
 No ejecutado: E2E Playwright y sondas HTTP de aislamiento (corren en CI), `chatwoot-real.audit` (requiere Chatwoot real configurado para el test), pruebas con Meta, IA y Resend reales.
 
+## Corte PC → VPS (2026-11-25, noche) — `app.loopchat.com.ar` / `chatwoot.loopchat.com.ar`
+
+| Paso | Estado | Evidencia |
+|---|---|---|
+| Código y CI | VERIFIED_REAL | `bfa5525` CI success; VPS en `290d35b` (fix de header) |
+| Secretos de producción | VERIFIED_REAL | mismas claves que la PC (`LOOPCHAT_ENCRYPTION_KEYS`, `BETTER_AUTH_SECRET`, Platform token, 4 de Chatwoot); nuevas solo la contraseña de la base y `HEALTH_TOKEN`; `600`; copia en el gestor de secretos del usuario |
+| Export (PC) + import (VPS) | VERIFIED_REAL | SHA256 OK; conteos idénticos en ambas bases; 15/15 credenciales descifrables; cuentas demo sin acceso (`secure-demo-accounts.sql`); 6 webhooks Chatwoot → `app.loopchat.com.ar`. La PC queda detenida y marcada, sin borrar nada |
+| Backup cifrado completo + copia fuera del VPS + restore | VERIFIED_REAL | `loopchat-20261125T204507Z` (Loopchat 100 tablas, Chatwoot 212, archivos) bajado a la PC (`storage/backups/vps/`); restore en la PC con la clave privada: conteos iguales, 15/15 secretos, Chatwoot 102 mensajes |
+| Caddy + Cloudflare (Full strict) | VERIFIED_REAL | ambos dominios 200 por HTTPS, HTTP→HTTPS; contenedores sin puertos públicos; Docker y Caddy habilitados al arranque |
+| Superadmins y Resend | VERIFIED_REAL | `cargerich8@gmail.com` (Loopchat) activado por restablecimiento (mail entregado por Resend); superadmin de Chatwoot → `loopsmiths1@gmail.com`, activado; entra por `/super_admin/sign_in` (no tiene cuentas de agente) |
+| Webhook de Meta → VPS | VERIFIED_REAL | verificado por Meta (200) en `/webhooks/whatsapp/+5491130137688` |
+| Prueba real de WhatsApp | VERIFIED_REAL | mensaje entrante 21:51:43 → respuesta del bot con IA 21:51:47, **entregada**; todo el circuito en el VPS (la PC fuera) |
+| Bug: Cloudflare descarta `api_access_token` (guion bajo) | IMPLEMENTED + VERIFIED_REAL | Loopchat envía `api-access-token`; antes: 401 en toda la API de Chatwoot |
+
+Pendiente (no bloquea el lanzamiento): admin real de Todo Trabajo (lo asigna el superadmin); borrar empresas DEMO (sus reconciliaciones fallan con `Invalid Access Token`, esperado); borrar el paquete en claro `/home/deploy/20261125T204126Z` del VPS (copias en la PC); token de métricas de R2 y timer de backups — **`loopchat-backup.service` debe conectar el contenedor también a la red `chatwoot_default`** para volcar Chatwoot (el backup de hoy se hizo a mano así); publicar la app de Meta si hace falta recibir de números no registrados como prueba.
+
 ## Backups en R2 dentro de la franquicia gratuita (2026-11-25) — rama `fix/loopchat-production-readiness`
 
 | Ítem | Estado | Evidencia |
