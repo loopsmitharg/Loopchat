@@ -30,8 +30,10 @@
     "db:seed:demo-catalog": "tsx --conditions=react-server scripts/seed-demo-catalog.ts",
     "monitor": "tsx --conditions=react-server scripts/monitor.ts",
     "ops:heartbeat": "tsx --conditions=react-server scripts/ops-heartbeat.ts",
+    "ops:r2-budget": "tsx scripts/r2-budget.ts",
     "backup": "bash scripts/backup.sh",
-    "backup:restore-test": "bash scripts/backup-restore-test.sh"
+    "backup:restore-test": "bash scripts/backup-restore-test.sh",
+    "test:backup": "bash tests/ops/backup-r2-e2e.sh"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

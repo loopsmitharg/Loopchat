@@ -6,6 +6,9 @@
 #
 # Variables: BACKUP_DIR (o RESTORE_TEST_PACKAGE), BACKUP_PRIVATE_KEY, RESTORE_TEST_ADMIN_URL
 # (conexión con permiso para crear/borrar bases, p. ej. postgres://user:pass@host:5432/postgres).
+# Chatwoot (recomendado): RESTORE_TEST_CHATWOOT_ADMIN_URL (servidor con pgvector) restaura también la base de Chatwoot
+# y sus adjuntos (del paquete o de RESTORE_MEDIA_DIR, por defecto $BACKUP_DIR/media) y verifica con
+# scripts/verify-chatwoot-media.sh que cada mensaje recupere sus archivos con el MD5 original.
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 : "${RESTORE_TEST_ADMIN_URL:?RESTORE_TEST_ADMIN_URL requerido}"
@@ -14,15 +17,32 @@ CANDIDATES=("${BACKUP_DIR:-./backups}"/loopchat-*.tar.enc "${BACKUP_DIR:-./backu
 PKG="${RESTORE_TEST_PACKAGE:-$( [ ${#CANDIDATES[@]} -gt 0 ] && ls -1t "${CANDIDATES[@]}" | head -1 || true)}"
 DB="loopchat_restore_test_$(date -u +%s)"
 TARGET="${RESTORE_TEST_ADMIN_URL%/*}/$DB"
+CW_ADMIN="${RESTORE_TEST_CHATWOOT_ADMIN_URL:-}"
+CW_DB="${DB}_chatwoot"
+CW_TARGET="${CW_ADMIN:+${CW_ADMIN%/*}/$CW_DB}"
+MEDIA_DIR="${RESTORE_MEDIA_DIR:-${BACKUP_DIR:-./backups}/media}"
 heartbeat() { [ "${BACKUP_SKIP_HEARTBEAT:-false}" = "true" ] || (cd "$HERE/.." && npm run --silent ops:heartbeat -- restore_test "$1" "$2") || true; }
-cleanup() { psql "$RESTORE_TEST_ADMIN_URL" -qc "drop database if exists $DB" >/dev/null 2>&1 || true; rm -rf "${STORE:-}"; }
+cleanup() {
+  psql "$RESTORE_TEST_ADMIN_URL" -qc "drop database if exists $DB" >/dev/null 2>&1 || true
+  [ -z "$CW_ADMIN" ] || psql "$CW_ADMIN" -qc "drop database if exists $CW_DB" >/dev/null 2>&1 || true
+  rm -rf "${STORE:-}" "${CW_STORE:-}"
+}
 trap 'cleanup; heartbeat fail "prueba de restore falló (línea $LINENO)"; exit 1' ERR
 [ -n "$PKG" ] && [ -f "$PKG" ] || { heartbeat fail "no hay backups para probar"; echo "No hay backups" >&2; exit 1; }
 
 psql "$RESTORE_TEST_ADMIN_URL" -qc "create database $DB" >/dev/null
 STORE="$(mktemp -d)"
-TARGET_DATABASE_URL="$TARGET" RESTORE_STORAGE_DIR="$STORE" DATABASE_URL="" bash "$HERE/restore.sh" "$PKG"
+if [ -n "$CW_ADMIN" ]; then
+  psql "$CW_ADMIN" -qc "create database $CW_DB" >/dev/null
+  CW_STORE="$(mktemp -d)"
+  [ -d "$MEDIA_DIR" ] || MEDIA_DIR=""
+  TARGET_CHATWOOT_DATABASE_URL="$CW_TARGET" RESTORE_CHATWOOT_STORAGE_DIR="$CW_STORE" RESTORE_MEDIA_DIR="$MEDIA_DIR"     TARGET_DATABASE_URL="$TARGET" RESTORE_STORAGE_DIR="$STORE" DATABASE_URL="" bash "$HERE/restore.sh" "$PKG"
+else
+  TARGET_DATABASE_URL="$TARGET" RESTORE_STORAGE_DIR="$STORE" DATABASE_URL="" bash "$HERE/restore.sh" "$PKG"
+fi
 OUT="$(cd "$HERE/.." && RESTORE_DATABASE_URL="$TARGET" npm run --silent verify:restore)"
+if [ -n "$CW_ADMIN" ]; then OUT="$OUT
+$(bash "$HERE/verify-chatwoot-media.sh" "$CW_TARGET" "$CW_STORE")"; fi
 echo "$OUT"
 trap - ERR
 cleanup

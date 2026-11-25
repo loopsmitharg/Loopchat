@@ -7,5 +7,7 @@ Description=Loopchat: prueba de restauración del último backup
 Type=oneshot
 EnvironmentFile=/etc/loopchat/restore-test.env
 WorkingDirectory=/opt/loopchat
-ExecStartPre=/usr/bin/rclone copy ${RCLONE_REMOTE} /var/backups/loopchat-restore-test --max-age 2d --include "loopchat-*"
+ExecStartPre=/usr/bin/rclone copy ${RCLONE_REMOTE} /var/backups/loopchat-restore-test --max-depth 1 --max-age 2d --include "loopchat-*"
+# adjuntos de Chatwoot: incremental (solo baja los nuevos); --fast-list = un listado, no uno por carpeta (ops Clase A)
+ExecStartPre=/usr/bin/rclone copy ${RCLONE_REMOTE}/media /var/backups/loopchat-restore-test/media --fast-list
 ExecStart=/usr/bin/env BACKUP_DIR=/var/backups/loopchat-restore-test bash scripts/backup-restore-test.sh

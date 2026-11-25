@@ -104,6 +104,9 @@ export async function collect(): Promise<{ findings: Finding[]; metrics: Metrics
     if (b?.lastStatus === "fail") add(`${name}_failed`, "critical", `Falló ${name === "backup" ? "el backup" : "la prueba de restore"}: ${b.detail ?? "ver logs"}.`);
     else if (ageH > maxH) add(`${name}_missing`, "critical", `${name === "backup" ? "No hay backup verificado" : "No hay prueba de restore"} en las últimas ${maxH} h.`);
   }
+  // presupuesto de R2 (scripts/r2-budget.ts): 6 GB, operaciones al 80 % o backup no subido por falta de espacio
+  const r2 = beats.find((x) => x.name === "r2_budget");
+  if (r2?.lastStatus === "fail") add("r2_budget", "warning", `Backups en R2 cerca del límite gratuito: ${r2.detail ?? "ver logs del backup"}.`);
 
   // 5) consumo de IA por empresa (cupo mensual del plan; el gasto lo paga cada cliente con su clave)
   const usage = await db.execute<{ slug: string; used: number; lim: number }>(sql`

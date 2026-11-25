@@ -5,6 +5,7 @@
 #   BACKUP_PRIVATE_KEY=/ruta/segura/backup-private.pem \
 #   TARGET_DATABASE_URL=postgres://.../loopchat_restore \
 #   [TARGET_CHATWOOT_DATABASE_URL=postgres://.../chatwoot_restore] [RESTORE_STORAGE_DIR=./storage-restore] \
+#   [RESTORE_CHATWOOT_STORAGE_DIR=./chatwoot-storage-restore] [RESTORE_MEDIA_DIR=<descarga de RCLONE_REMOTE/media>] \
 #   scripts/restore.sh backups/loopchat-YYYYMMDDTHHMMSSZ.tar.enc
 #
 # Verifica el SHA-256 del paquete (si está el .sha256 al lado) y el MANIFEST interno antes de restaurar.
@@ -42,4 +43,25 @@ if [ -f "$WORK/$NAME/loopchat-storage.tar.gz" ]; then
   mkdir -p "${RESTORE_STORAGE_DIR:-./storage-restore}"
   tar -xzf "$WORK/$NAME/loopchat-storage.tar.gz" -C "${RESTORE_STORAGE_DIR:-./storage-restore}"
 fi
-echo "Restore completado en $TARGET_DATABASE_URL (verificar con: RESTORE_DATABASE_URL=… npm run verify:restore)"
+# Adjuntos de Chatwoot: dentro del paquete (backup sin R2) o descargados de <RCLONE_REMOTE>/media (RESTORE_MEDIA_DIR)
+if [ -n "${RESTORE_CHATWOOT_STORAGE_DIR:-}" ]; then
+  mkdir -p "$RESTORE_CHATWOOT_STORAGE_DIR"
+  if [ -f "$WORK/$NAME/chatwoot-storage.tar.gz" ]; then tar -xzf "$WORK/$NAME/chatwoot-storage.tar.gz" -C "$RESTORE_CHATWOOT_STORAGE_DIR"; fi
+  if [ -n "${RESTORE_MEDIA_DIR:-}" ]; then
+    : "${BACKUP_PRIVATE_KEY:?BACKUP_PRIVATE_KEY requerido para descifrar adjuntos}"
+    # formato de scripts/backup.sh (encrypt_file): [clave+IV envueltos con RSA][AES-256-CBC]
+    KB=$(( $(openssl pkey -in "$BACKUP_PRIVATE_KEY" -noout -text | sed -n 's/.*(\([0-9]*\) bit.*/\1/p' | head -1) / 8 ))
+    n=0
+    while IFS= read -r -d '' f; do
+      rel="${f#"$RESTORE_MEDIA_DIR"/}"; out="$RESTORE_CHATWOOT_STORAGE_DIR/${rel%.enc}"
+      mkdir -p "$(dirname "$out")"
+      head -c "$KB" "$f" > "$WORK/kiv.enc"
+      openssl pkeyutl -decrypt -inkey "$BACKUP_PRIVATE_KEY" -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 -in "$WORK/kiv.enc" -out "$WORK/kiv"
+      hex="$(od -An -tx1 -v "$WORK/kiv" | tr -d ' \n')"
+      tail -c +"$((KB + 1))" "$f" | openssl enc -d -aes-256-cbc -K "${hex:0:64}" -iv "${hex:64:32}" > "$out"
+      n=$((n + 1))
+    done < <(find "$RESTORE_MEDIA_DIR" -type f -name '*.enc' -print0)
+    echo "Adjuntos de Chatwoot descifrados: $n en $RESTORE_CHATWOOT_STORAGE_DIR"
+  fi
+fi
+echo "Restore completado en $(echo "$TARGET_DATABASE_URL" | sed "s|//[^@]*@|//***@|") (verificar con: RESTORE_DATABASE_URL=… npm run verify:restore)"

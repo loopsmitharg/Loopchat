@@ -44,6 +44,18 @@ Sin despliegue: todavía no hay VPS, dominio confirmado ni cuenta de Resend. Pro
 Comandos: `npm run typecheck` PASS · `npm run lint` PASS (se excluyen `.agents/` y `.claude/`) · `npm test` 270/271 en la corrida con el build de Docker en paralelo; el que falló (`engine-reliability`, umbral de 1500 ms, midió 1897 ms) pasa 16/16 repetido solo · audit vitest 16 PASS / 2 skipped (requieren Chatwoot real) · build de producción dentro de la imagen PASS.
 No ejecutado: E2E Playwright y sondas HTTP de aislamiento (corren en CI), `chatwoot-real.audit` (requiere Chatwoot real configurado para el test), pruebas con Meta, IA y Resend reales.
 
+## Backups en R2 dentro de la franquicia gratuita (2026-11-25) — rama `fix/loopchat-production-readiness`
+
+| Ítem | Estado | Evidencia |
+|---|---|---|
+| Tamaño real de un backup completo | VERIFIED_LOCAL | dumps de las bases locales: Loopchat 0,32 MB + Chatwoot 0,43 MB, archivos 0 → 752 KB cifrado; 8 copias ≈ 6 MB |
+| Tope 8 GB (cuenta entera), aviso 6 GB, ops 80/95 %, retención 7 días, nunca borra la última copia completa, falla cerrada | VERIFIED_LOCAL | `tests/unit/r2-budget.test.ts` 8/8; `backup.sh` real contra R2 simulado (alias rclone + API GraphQL simulada): ok (borró 2 vencidas + 1 incompleta, conservó la reciente, subió y verificó), sin espacio / ops 96 % / API caída → no sube, remoto sin cambios, copia local conservada |
+| Restore desde la copia "bajada" | VERIFIED_LOCAL | `backup-restore-test.sh`: conteos OK, 15/15 secretos descifrables; Chatwoot restaurado en base temporal con conteos idénticos (6/33/102/31/8) |
+| Bug: imagen con `pg_dump` 15 contra PostgreSQL 16 (el backup no podía correr) | VERIFIED_LOCAL | Dockerfile instala `postgresql-client-16` (PGDG); imagen completa reconstruida: `pg_dump` 16.16 |
+| Adjuntos de Chatwoot: copia incremental cifrada a R2 (una vez por archivo, dentro del tope de 8 GB) | VERIFIED_LOCAL | `tests/unit/r2-budget.test.ts` 13/13; `npm run test:backup` 15/15 con la imagen real reconstruida (`pg_dump` 16.16): cifrado (sin texto plano en R2), sin re-subidas, reparación de subida incompleta, retención de huérfanos, sin espacio / API caída → no sube; restore con 4/4 adjuntos con MD5 original y 3 mensajes con adjuntos; adjunto corrupto → la prueba falla. Repetido con el esquema real de Chatwoot (`CW_SCHEMA_DUMP`, 102 mensajes): 15/15 |
+| Bug: con Loopchat y Chatwoot en el mismo servidor, la prueba de restore usaba el mismo nombre de base temporal | IMPLEMENTED | detectado por la prueba e2e; base de Chatwoot con sufijo `_chatwoot` |
+| R2 real (bucket, tokens, primera subida y restore) | BLOCKED_EXTERNAL | faltan cuenta/tokens; **timer diario NO activado** |
+
 ## Fase 2: VPS preparado (2026-11-25) — Contabo `212.28.183.78`
 
 | Área | Estado | Evidencia |

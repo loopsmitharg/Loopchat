@@ -11,6 +11,8 @@ EnvironmentFile=/etc/loopchat/backup.env
 WorkingDirectory=/opt/loopchat
 ExecStart=/usr/bin/docker compose -f infra/loopchat/docker-compose.yml --env-file .env.production run --rm -T \
   -e BACKUP_DIR=/backups -e BACKUP_PUBLIC_KEY=/run/backup-public.pem -e RCLONE_REMOTE -e RCLONE_CONFIG=/run/rclone.conf -e CHATWOOT_PG_DUMP_CMD \
+  -e CHATWOOT_STORAGE_DIR=/chatwoot-storage -v chatwoot_storage_data:/chatwoot-storage:ro \
+  -e BACKUP_REMOTE_RETENTION_DAYS -e R2_ACCOUNT_ID -e R2_ANALYTICS_TOKEN -e R2_MAX_BYTES -e R2_WARN_BYTES -e R2_OPS_WARN_PCT -e R2_OPS_MAX_PCT \
   -v /var/backups/loopchat:/backups -v /etc/loopchat/backup-public.pem:/run/backup-public.pem:ro -v /etc/loopchat/rclone.conf:/run/rclone.conf:ro \
   app bash scripts/backup.sh
 # si el script falla, el monitor alerta por el heartbeat; además systemd registra el error
