@@ -33,7 +33,7 @@ const ai = scriptedAi(3017);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function cw<T>(token: string, method: string, p: string, body?: unknown): Promise<T> {
-  const r = await fetch(`${REAL}${p}`, { method, headers: { api_access_token: token, "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+  const r = await fetch(`${REAL}${p}`, { method, headers: { "api-access-token": token, "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
   const t = await r.text();
   if (!r.ok) throw new Error(`${method} ${p} → ${r.status} ${t.slice(0, 200)}`);
   return (t ? JSON.parse(t) : null) as T;

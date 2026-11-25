@@ -156,7 +156,8 @@ const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url ?? "/", `http://localhost:${PORT}`);
     const p = url.pathname;
-    const token = req.headers["api_access_token"] as string | undefined;
+    // como Rails: api_access_token y api-access-token son el mismo header (HTTP_API_ACCESS_TOKEN)
+    const token = (req.headers["api-access-token"] ?? req.headers["api_access_token"]) as string | undefined;
 
     // ---------- controles del simulador ----------
     if (p === "/__sim/health") return json(res, 200, { ok: true, simulator: true });

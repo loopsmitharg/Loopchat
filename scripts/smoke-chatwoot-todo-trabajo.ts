@@ -22,7 +22,7 @@ async function main() {
   const token = decryptSecret(map.apiTokenEnc, `cw:${t.id}`);
   const acc = `/api/v1/accounts/${map.chatwootAccountId}`;
   const cw = async <T>(method: string, p: string, body?: unknown): Promise<T> => {
-    const r = await fetch(`${base}${acc}${p}`, { method, headers: { api_access_token: token, "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+    const r = await fetch(`${base}${acc}${p}`, { method, headers: { "api-access-token": token, "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
     const txt = await r.text();
     if (!r.ok) throw new Error(`${method} ${p} → ${r.status} ${txt.slice(0, 200)}`);
     return (txt ? JSON.parse(txt) : null) as T;

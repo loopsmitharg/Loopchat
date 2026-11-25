@@ -19,9 +19,10 @@ async function request<T>(baseUrl: string, token: string, method: string, path: 
   const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? 15000);
   let res: Response;
   try {
+    // Header con guiones: Cloudflare (y otros proxies) descartan los headers con guion bajo como api_access_token.
     res = await fetch(url, {
       method,
-      headers: { api_access_token: token, "content-type": "application/json", accept: "application/json" },
+      headers: { "api-access-token": token, "content-type": "application/json", accept: "application/json" },
       body: body === undefined ? undefined : JSON.stringify(body),
       signal: controller.signal,
       redirect: "error",
@@ -52,7 +53,7 @@ async function requestForm<T>(baseUrl: string, token: string, path: string, form
   const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? 30000);
   let res: Response;
   try {
-    res = await fetch(url, { method: "POST", headers: { api_access_token: token, accept: "application/json" }, body: form, signal: controller.signal, redirect: "error" });
+    res = await fetch(url, { method: "POST", headers: { "api-access-token": token, accept: "application/json" }, body: form, signal: controller.signal, redirect: "error" });
   } catch (e) {
     throw new ChatwootError(0, `Chatwoot no responde (${(e as Error).name === "AbortError" ? "timeout" : "red"})`);
   } finally {
