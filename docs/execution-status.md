@@ -54,7 +54,8 @@ No ejecutado: E2E Playwright y sondas HTTP de aislamiento (corren en CI), `chatw
 | Bug: imagen con `pg_dump` 15 contra PostgreSQL 16 (el backup no podía correr) | VERIFIED_LOCAL | Dockerfile instala `postgresql-client-16` (PGDG); imagen completa reconstruida: `pg_dump` 16.16 |
 | Adjuntos de Chatwoot: copia incremental cifrada a R2 (una vez por archivo, dentro del tope de 8 GB) | VERIFIED_LOCAL | `tests/unit/r2-budget.test.ts` 13/13; `npm run test:backup` 15/15 con la imagen real reconstruida (`pg_dump` 16.16): cifrado (sin texto plano en R2), sin re-subidas, reparación de subida incompleta, retención de huérfanos, sin espacio / API caída → no sube; restore con 4/4 adjuntos con MD5 original y 3 mensajes con adjuntos; adjunto corrupto → la prueba falla. Repetido con el esquema real de Chatwoot (`CW_SCHEMA_DUMP`, 102 mensajes): 15/15 |
 | Bug: con Loopchat y Chatwoot en el mismo servidor, la prueba de restore usaba el mismo nombre de base temporal | IMPLEMENTED | detectado por la prueba e2e; base de Chatwoot con sufijo `_chatwoot` |
-| R2 real (bucket, tokens, primera subida y restore) | BLOCKED_EXTERNAL | faltan cuenta/tokens; **timer diario NO activado** |
+| Conexión rclone a R2 en el VPS (`scripts/vps/install-rclone.sh`) | VERIFIED_REAL | bucket privado `loopchat-backups-prod`, token limitado al bucket; `/etc/loopchat/rclone.conf` `400` dueño uid 1001 (contenedor = `deploy` en el host); listado de la raíz desde un contenedor uid 1001 OK (0 objetos, 1 op Clase A); listar otros buckets: denegado; copia subida destruida (`shred`) |
+| Primera subida y restore contra R2 real | BLOCKED_EXTERNAL | falta el token de métricas (`R2_ANALYTICS_TOKEN`): sin él `backup.sh` no sube (falla cerrada); **timer diario NO activado** |
 
 ## Fase 2: VPS preparado (2026-11-25) — Contabo `212.28.183.78`
 
