@@ -49,13 +49,13 @@ No ejecutado: E2E Playwright y sondas HTTP de aislamiento (corren en CI), `chatw
 | Área | Estado | Evidencia |
 |---|---|---|
 | SSH por clave (usuario `deploy`, sudo con contraseña); `permitrootlogin no`, `passwordauthentication no` | VERIFIED_REAL | `sshd -T` |
-| Ubuntu 24.04.5 actualizado, sin salto a 26.04 (`Prompt=never`); swap 2 GB | VERIFIED_REAL | **reinicio pendiente** (kernel 6.8.0-151) |
+| Ubuntu 24.04.5 actualizado, sin salto a 26.04 (`Prompt=never`); swap 2 GB | VERIFIED_REAL | reiniciado: kernel 6.8.0-151, servicios arriba solos |
 | ufw IPv4/IPv6: SSH con límite; 80/443 solo desde Cloudflare (15 rangos v4 + 7 v6); fail2ban `sshd` | VERIFIED_REAL | `ufw status verbose`; conexión SSH nueva OK con el firewall activo |
 | Docker 29.10.1 + Compose v5.8.0 (repo oficial), logs rotados; Caddy 2.11.9 (repo oficial), deshabilitado | VERIFIED_REAL | `hello-world` OK |
 | Repo en `/opt/loopchat` @ `e05cacf`; `/etc/loopchat` (750), `/var/backups/loopchat` (700) | VERIFIED_REAL | — |
 | Compose de Loopchat y Chatwoot + Caddyfile | VERIFIED_REAL (`config` con valores de relleno, borrados al terminar; `caddy adapt`) | puertos solo en `127.0.0.1:3000` y `127.0.0.1:3001` |
 | DNS `app.` y `chatwoot.loopchat.com.ar` en Cloudflare (proxied) | VERIFIED_REAL | responden 521 (sin origen todavía) |
-| Certificado de origen de Cloudflare | **BLOCKED_EXTERNAL** (lo genera el dueño de la cuenta) | — |
+| Certificado de origen de Cloudflare (ECC, hasta 2041) en Caddy; Full (strict) | VERIFIED_REAL: par clave/cert verificado, `caddy validate` como usuario caddy OK; Caddy deshabilitado hasta el corte | dominios siguen en 521 (sin origen activo) |
 
 No se migraron bases, no hay `.env` en el servidor, ninguna app levantada ni pública.
 

@@ -40,15 +40,13 @@ límite; 80/443 **solo desde las IPs de Cloudflare**), fail2ban, Docker Engine +
 Caddy (repo oficial, **detenido** hasta tener el certificado de origen), `/opt/loopchat`, `/etc/loopchat`,
 `/var/backups/loopchat` y el clonado del repo. Deja un informe en `~/provision-report.txt`.
 
-**C. Proxy y dominios**
+**C. Proxy y dominios** — HECHO el 2026-11-25 (Caddy configurado y validado, **deshabilitado** hasta el corte)
+- Cloudflare: SSL/TLS **Full (strict)**; *Origin Certificate* ECC hasta 2041 para `loopchat.com.ar`, `*.loopchat.com.ar`,
+  `app.` y `chatwoot.`; registros proxied. Originales guardados fuera del servidor (gestor de secretos).
 ```bash
-sudo cp infra/caddy/Caddyfile /etc/caddy/Caddyfile
-sudo install -m 600 cf-origin.pem cf-origin.key /etc/caddy/ && sudo chown caddy: /etc/caddy/cf-origin.*
-printf 'APP_DOMAIN=app.loopchat.com.ar\nCHATWOOT_DOMAIN=chatwoot.loopchat.com.ar\n' | sudo tee /etc/caddy/caddy.env
-sudo mkdir -p /etc/systemd/system/caddy.service.d && sudo cp infra/caddy/caddy-env.conf /etc/systemd/system/caddy.service.d/env.conf
-sudo systemctl daemon-reload && sudo caddy validate --config /etc/caddy/Caddyfile
-# Caddy queda deshabilitado (lo deja así provision.sh): se habilita recién en el corte, con las apps listas
-# sudo systemctl enable --now caddy
+scp cf-origin.pem cf-origin.key scripts/vps/install-caddy.sh deploy@<IP>:~
+ssh -t deploy@<IP> "sudo bash ~/install-caddy.sh"   # verifica el par, instala, valida como caddy y borra las copias
+# en el corte, con las apps listas:  sudo systemctl enable --now caddy
 ```
 
 **D. Variables** (sección 0 abajo): `.env.production` desde `infra/loopchat/env.production.example` e `infra/chatwoot/.env` desde
