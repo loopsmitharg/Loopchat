@@ -29,15 +29,16 @@ Herramientas (en el repo):
 - [ ] Gestor de secretos con: `.env` local, `infra/chatwoot/.env` local, API key de Resend, claves de backup.
 - [ ] Email real de quien será superadmin y del admin de Todo Trabajo (hoy son cuentas de prueba).
 
-**B. Servidor**
+**B. Servidor** — HECHO el 2026-11-25 en el VPS de Contabo (`212.28.183.78`, Ubuntu 24.04.5, 6 vCPU / 11 GiB / 193 GB)
 ```bash
-adduser deploy && usermod -aG sudo deploy        # + copiar authorized_keys; PermitRootLogin no; PasswordAuthentication no
-sudo apt update && sudo apt -y upgrade && sudo apt -y install unattended-upgrades fail2ban curl
-sudo ufw allow OpenSSH && sudo ufw allow 80,443/tcp && sudo ufw enable
-# Docker Engine + compose plugin y Caddy: desde sus repositorios oficiales
-sudo mkdir -p /opt/loopchat /etc/loopchat /var/backups/loopchat && sudo chown deploy: /opt/loopchat
-git clone https://github.com/loopsmitharg/Loopchat.git /opt/loopchat && cd /opt/loopchat && git checkout <commit/tag que corre en la PC>
+# previo (a mano): usuario deploy con sudo y clave SSH; PermitRootLogin no; PasswordAuthentication no
+scp scripts/vps/provision.sh deploy@<IP>:~ && ssh -t deploy@<IP> "sudo bash ~/provision.sh"   # idempotente
+sudo reboot    # si el informe dice "reinicio pendiente: SI"
 ```
+`scripts/vps/provision.sh`: updates de 24.04 sin salto a 26.04 (`Prompt=never`), swap 2 GB, ufw IPv4/IPv6 (SSH con
+límite; 80/443 **solo desde las IPs de Cloudflare**), fail2ban, Docker Engine + Compose (repo oficial, logs rotados),
+Caddy (repo oficial, **detenido** hasta tener el certificado de origen), `/opt/loopchat`, `/etc/loopchat`,
+`/var/backups/loopchat` y el clonado del repo. Deja un informe en `~/provision-report.txt`.
 
 **C. Proxy y dominios**
 ```bash
@@ -45,7 +46,9 @@ sudo cp infra/caddy/Caddyfile /etc/caddy/Caddyfile
 sudo install -m 600 cf-origin.pem cf-origin.key /etc/caddy/ && sudo chown caddy: /etc/caddy/cf-origin.*
 printf 'APP_DOMAIN=app.loopchat.com.ar\nCHATWOOT_DOMAIN=chatwoot.loopchat.com.ar\n' | sudo tee /etc/caddy/caddy.env
 sudo mkdir -p /etc/systemd/system/caddy.service.d && sudo cp infra/caddy/caddy-env.conf /etc/systemd/system/caddy.service.d/env.conf
-sudo systemctl daemon-reload && sudo caddy validate --config /etc/caddy/Caddyfile && sudo systemctl restart caddy
+sudo systemctl daemon-reload && sudo caddy validate --config /etc/caddy/Caddyfile
+# Caddy queda deshabilitado (lo deja así provision.sh): se habilita recién en el corte, con las apps listas
+# sudo systemctl enable --now caddy
 ```
 
 **D. Variables** (sección 0 abajo): `.env.production` desde `infra/loopchat/env.production.example` e `infra/chatwoot/.env` desde

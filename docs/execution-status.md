@@ -1,6 +1,6 @@
 # Estado de ejecución — Loopchat V1
 
-**Última actualización:** 2026-11-24 (Resend real y superadmin; ver sección "Resend real y superadmin") · **Agente:** implementación autónoma (Claude) · **Entorno de verificación:** Linux (Node 22, PostgreSQL 16, Chromium 1194), sin acceso a Docker Hub, Meta ni proveedores de IA reales.
+**Última actualización:** 2026-11-25 (Fase 2: VPS preparado; ver sección "Fase 2") · **Agente:** implementación autónoma (Claude) · **Entorno de verificación:** Linux (Node 22, PostgreSQL 16, Chromium 1194), sin acceso a Docker Hub, Meta ni proveedores de IA reales.
 
 Leyenda: `IMPLEMENTED` código completo · `VERIFIED_LOCAL` pruebas locales automatizadas pasan · `VERIFIED_REAL` probado contra servicios reales · `BLOCKED_EXTERNAL` depende de acceso externo · `NOT_DONE` no realizado.
 
@@ -43,6 +43,21 @@ Sin despliegue: todavía no hay VPS, dominio confirmado ni cuenta de Resend. Pro
 
 Comandos: `npm run typecheck` PASS · `npm run lint` PASS (se excluyen `.agents/` y `.claude/`) · `npm test` 270/271 en la corrida con el build de Docker en paralelo; el que falló (`engine-reliability`, umbral de 1500 ms, midió 1897 ms) pasa 16/16 repetido solo · audit vitest 16 PASS / 2 skipped (requieren Chatwoot real) · build de producción dentro de la imagen PASS.
 No ejecutado: E2E Playwright y sondas HTTP de aislamiento (corren en CI), `chatwoot-real.audit` (requiere Chatwoot real configurado para el test), pruebas con Meta, IA y Resend reales.
+
+## Fase 2: VPS preparado (2026-11-25) — Contabo `212.28.183.78`
+
+| Área | Estado | Evidencia |
+|---|---|---|
+| SSH por clave (usuario `deploy`, sudo con contraseña); `permitrootlogin no`, `passwordauthentication no` | VERIFIED_REAL | `sshd -T` |
+| Ubuntu 24.04.5 actualizado, sin salto a 26.04 (`Prompt=never`); swap 2 GB | VERIFIED_REAL | **reinicio pendiente** (kernel 6.8.0-151) |
+| ufw IPv4/IPv6: SSH con límite; 80/443 solo desde Cloudflare (15 rangos v4 + 7 v6); fail2ban `sshd` | VERIFIED_REAL | `ufw status verbose`; conexión SSH nueva OK con el firewall activo |
+| Docker 29.10.1 + Compose v5.8.0 (repo oficial), logs rotados; Caddy 2.11.9 (repo oficial), deshabilitado | VERIFIED_REAL | `hello-world` OK |
+| Repo en `/opt/loopchat` @ `e05cacf`; `/etc/loopchat` (750), `/var/backups/loopchat` (700) | VERIFIED_REAL | — |
+| Compose de Loopchat y Chatwoot + Caddyfile | VERIFIED_REAL (`config` con valores de relleno, borrados al terminar; `caddy adapt`) | puertos solo en `127.0.0.1:3000` y `127.0.0.1:3001` |
+| DNS `app.` y `chatwoot.loopchat.com.ar` en Cloudflare (proxied) | VERIFIED_REAL | responden 521 (sin origen todavía) |
+| Certificado de origen de Cloudflare | **BLOCKED_EXTERNAL** (lo genera el dueño de la cuenta) | — |
+
+No se migraron bases, no hay `.env` en el servidor, ninguna app levantada ni pública.
 
 ## Resend real y superadmin (2026-11-24) — rama `fix/loopchat-production-readiness`
 
