@@ -16,7 +16,10 @@ FROM node:22-bookworm-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
 # /data/storage: el volumen nombrado hereda dueño y permisos de este directorio (si no, queda de root y loopchat no puede escribir)
-RUN apt-get update && apt-get install -y --no-install-recommends postgresql-client openssl rclone ca-certificates && rm -rf /var/lib/apt/lists/* \
+# pg_dump/pg_restore 16 del repositorio oficial PGDG: el de Debian (15) se niega a volcar las bases (PostgreSQL 16)
+RUN apt-get update && apt-get install -y --no-install-recommends postgresql-common openssl rclone ca-certificates \
+  && /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y && apt-get install -y --no-install-recommends postgresql-client-16 \
+  && rm -rf /var/lib/apt/lists/* \
   && useradd --system --uid 1001 loopchat \
   && mkdir -p /data/storage && chown loopchat:loopchat /data/storage
 COPY --from=build --chown=loopchat /app ./
